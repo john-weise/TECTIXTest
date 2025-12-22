@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TECTIX - RMF Automation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="card">
+            <div class="brand-header">
+                <img src="{{ url_for('static', filename='PLEXLogo.png') }}" alt="PLEX Logo" class="brand-logo">
+                <h1>CSD Checklist Generator</h1>
+                <p>Upload files to automatically update your checklist</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('process') }}" enctype="multipart/form-data">
+                <label for="system_id">System ID</label>
+                <input type="text" id="system_id" name="system_id" required>
+
+                <label for="apms_file">APMS CSV File</label>
+                <input type="file" id="apms_file" name="apms_file" required>
+
+                <button type="submit">Generate Checklist</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

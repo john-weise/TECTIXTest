@@ -1,0 +1,39 @@
+@font-face {
+  font-family: 'VT323';
+  src: url('../fonts/vt323-v17-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.loading-plaintext {
+  position: fixed;
+  top: 30%;
+  right: 5%;
+  pointer-events: none;
+  user-select: none;
+  color: #f15722;                
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  z-index: 9999;
+  white-space: pre-wrap;
+}
+
+.loading-line {
+  margin: 0;                     /* tightly stacked */
+}
+
+.cursor {
+  display: inline-block;
+  width: 1ch;                    /* full-width block */
+  height: 1em;
+  background-color: currentColor;
+  animation: blink 1s step-end infinite;
+}
+
+/* blinking block cursor */
+@keyframes blink {
+  0%, 50%   { opacity: 1; }
+  50.1%, 100% { opacity: 0; }
+}

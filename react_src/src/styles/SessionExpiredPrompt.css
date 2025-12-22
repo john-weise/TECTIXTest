@@ -1,0 +1,117 @@
+/* SessionExpiredPrompt — themed to match Dashboard.css / TopNav.css / Login.css */
+
+/* Fallbacks in case the file is used outside pages that define these vars */
+:root {
+  --plex-black: var(--plex-black, #0B0B0B);
+  --plex-gold: var(--plex-gold, #f15722);
+  --plex-warm-gray: var(--plex-warm-gray, #3c434e);
+  --plex-white: var(--plex-white, #FFFFFF);
+
+  --card-bg: var(--card-bg, rgba(18,18,18,0.92));
+  --card-border: var(--card-border, #1a1a1a);
+  --radius: var(--radius, 12px);
+}
+
+/* Backdrop sits above the app, below any dev tooltips, etc. */
+.sep-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(11, 11, 11, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+/* Modal container */
+.sep-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  margin: auto;
+  width: min(520px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+
+  background: var(--card-bg);
+  color: var(--plex-white);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+  padding: 20px 22px;
+  display: grid;
+  gap: 10px;
+}
+
+/* Typography */
+.sep-title {
+  margin: 0 0 4px 0;
+  font-family: 'GI', 'Oswald', 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.25px;
+  color: var(--plex-white);
+}
+
+.sep-desc {
+  margin: 0;
+  font: 400 0.95rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #d8d8d8;
+}
+
+/* Gold rule for consistency (optional, include an element with gold-rule if you want) */
+.sep-modal .gold-rule {
+  width: 52px;
+  height: 3px;
+  background: var(--plex-gold);
+  border-radius: 2px;
+  margin: 6px 0 6px 0;
+}
+
+/* Actions */
+.sep-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+/* Primary CTA styled like your .generate-button but modal-sized */
+.sep-primary {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--plex-gold);
+  color: var(--plex-black);
+  font: 700 0.98rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  cursor: pointer;
+  transition: transform 80ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.sep-primary:hover { filter: brightness(0.95); }
+.sep-primary:active { transform: translateY(1px); }
+.sep-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(241, 87, 34, 0.35); /* plex-gold glow */
+}
+
+/* Optional secondary button that matches your “download-button” vibe */
+.sep-secondary {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--plex-gold);
+  background: transparent;
+  color: var(--plex-gold);
+  font: 700 0.98rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.sep-secondary:hover {
+  background: rgba(241, 87, 34, 0.08);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .sep-primary,
+  .sep-secondary { transition: none; }
+}
+

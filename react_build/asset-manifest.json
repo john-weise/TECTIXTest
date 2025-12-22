@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/static/css/main.ea250079.css",
+    "main.js": "/static/js/main.53d8f861.js",
+    "static/media/space-grotesk-v21-latin_latin-ext-500.woff2": "/static/media/space-grotesk-v21-latin_latin-ext-500.91eeaa2f041d09ffb249.woff2",
+    "static/media/space-grotesk-v21-latin_latin-ext-700.woff2": "/static/media/space-grotesk-v21-latin_latin-ext-700.8844ee3bf90a4318bebd.woff2",
+    "static/media/noto-sans-v39-latin-700.woff2": "/static/media/noto-sans-v39-latin-700.6d3b8182d14470a1d7e1.woff2",
+    "static/media/noto-sans-v39-latin-regular.woff2": "/static/media/noto-sans-v39-latin-regular.f5cd7b617bcb047bfaa4.woff2",
+    "static/media/oswald-v56-latin-500.woff2": "/static/media/oswald-v56-latin-500.20e79ba28ffaf273707f.woff2",
+    "index.html": "/index.html",
+    "main.ea250079.css.map": "/static/css/main.ea250079.css.map",
+    "main.53d8f861.js.map": "/static/js/main.53d8f861.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ea250079.css",
+    "static/js/main.53d8f861.js"
+  ]
+}

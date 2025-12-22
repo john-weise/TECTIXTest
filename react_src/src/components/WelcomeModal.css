@@ -1,0 +1,264 @@
+/* src/components/WelcomeModal.css
+   TECTIX modal — flat/metro, cohesive with Dashboard.css
+   ------------------------------------------------------ */
+
+/* Map modal tokens to the shared Dashboard tokens */
+:root {
+  /* Inherit from Dashboard palette */
+  --ttx-bg-900: var(--plex-black);
+  --ttx-bg-800: #121418;
+  --ttx-panel:   var(--card-bg);      /* same surface as dashboard cards */
+  --ttx-panel-weak: #14161d;          /* subtle contrast bar */
+
+  --ttx-text-100: var(--plex-white);
+  --ttx-text-300: #cfd3da;
+  --ttx-text-500: #9aa1ad;
+
+  --ttx-border: var(--card-border);   /* same hairline as dashboard */
+
+  /* Accent -> single brand accent */
+  --ttx-accent: var(--plex-gold);
+
+  /* State */
+  --ttx-danger: #ff5a5a;
+  --ttx-success: #36c98e;
+
+  /* Focus ring uses brand accent */
+  --ttx-focus: 0 0 0 3px rgba(241, 87, 34, 0.35); /* plex-gold @ 35% */
+}
+
+/* Backdrop: flat tint (no blur) */
+.ttx-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 11, 11, 0.72); /* aligns with --plex-black */
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* Panel: flat fill, minimal elevation; border matches dashboard */
+.ttx-modal {
+  width: min(720px, 92vw);
+  background: var(--ttx-panel);
+  border: 1px solid var(--ttx-border);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45); /* matches dashboard cards */
+  border-radius: 10px;
+  color: var(--ttx-text-100);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: ttx-modal-in 140ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes ttx-modal-in { to { opacity: 1; transform: translateY(0); } }
+
+/* Header: flat bar with hairline divider (uses panel-weak) */
+.ttx-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--ttx-panel-weak);
+  border-bottom: 1px solid var(--ttx-border);
+}
+
+.ttx-brand { display: flex; align-items: center; gap: 10px; }
+.ttx-brand__logo { width: 22px; height: 22px; object-fit: contain; }
+.ttx-brand__wordmark {
+  letter-spacing: .12em;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--ttx-text-100);
+  text-transform: uppercase;
+}
+
+/* Close button: flat icon */
+.ttx-iconbtn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ttx-text-300);
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ttx-iconbtn:hover { color: var(--ttx-text-100); }
+.ttx-iconbtn:focus-visible { outline: none; box-shadow: var(--ttx-focus); }
+
+/* Body */
+.ttx-modal__body { padding: 18px 16px 12px; }
+.ttx-modal__title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  margin: 0 0 6px 0;
+}
+.ttx-modal__copy { color: var(--ttx-text-300); margin: 0 0 12px 0; }
+.ttx-muted { color: var(--ttx-text-500); }
+
+/* Callout strip: flat with left accent bar (uses brand accent) */
+.ttx-callout {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--ttx-border);
+  background: #141823;
+  color: var(--ttx-text-300);
+  position: relative;
+}
+.ttx-callout::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--ttx-accent);
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+/* Footer: flat bar + right-aligned actions */
+.ttx-modal__footer {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--ttx-border);
+  display: flex; justify-content: flex-end; gap: 10px;
+  background: var(--ttx-panel-weak);
+}
+
+/* Actions row utility */
+.ttx-modal__actions { display: flex; gap: 10px; }
+
+/* Form */
+.ttx-form { display: grid; gap: 12px; }
+
+.ttx-field label {
+  display: block;
+  font-size: 12px;
+  color: var(--ttx-text-500);
+  margin-bottom: 6px;
+  letter-spacing: .02em;
+}
+
+.ttx-field input[type="text"],
+.ttx-field input[type="password"] {
+  width: 100%;
+  background: #10131a;
+  border: 1px solid var(--ttx-border);
+  color: var(--ttx-text-100);
+  padding: 10px 12px;
+  border-radius: 8px;
+  outline: none;
+}
+.ttx-field input::placeholder { color: #6e7481; }
+.ttx-field input:focus-visible {
+  border-color: var(--ttx-accent);
+  box-shadow: var(--ttx-focus);
+}
+
+/* Password show/hide */
+.ttx-input-with-toggle { position: relative; }
+.ttx-toggle {
+  position: absolute; right: 8px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--ttx-text-500);
+  background: #0e1219;
+  border: 1px solid var(--ttx-border);
+  cursor: pointer;
+}
+.ttx-toggle:hover { color: var(--ttx-text-100); }
+
+/* Hints / requirements */
+.ttx-hints { margin-top: 6px; }
+.ttx-hints__title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--ttx-text-500); margin-bottom: 6px;
+}
+.ttx-hints__list {
+  display: grid; gap: 4px; margin: 0; padding-left: 18px;
+  color: var(--ttx-text-300); font-size: 13px;
+}
+.ttx-hints__list li.ok { color: var(--ttx-success); }
+.ttx-hints__list li.bad { color: #ffb07a; }
+.ttx-hints__ok { margin-top: 6px; color: var(--ttx-success); }
+
+/* Strength bar: flat segments */
+.ttx-strength { display: flex; gap: 6px; margin-top: 8px; }
+.ttx-strength .seg {
+  flex: 1; height: 6px;
+  border-radius: 4px;
+  background: #0f1218;
+  border: 1px solid var(--ttx-border);
+}
+.ttx-strength .seg.on {
+  background: var(--ttx-accent);
+  border-color: rgba(241, 87, 34, 0.85); /* plex-gold edge */
+}
+
+/* Alerts: flat backgrounds */
+.ttx-alert {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid var(--ttx-border);
+}
+.ttx-alert--error {
+  border-color: rgba(255, 90, 90, .45);
+  background: rgba(255, 90, 90, .12);
+  color: #ffc6c6;
+}
+.ttx-alert--success {
+  border-color: rgba(54, 201, 142, .45);
+  background: rgba(54, 201, 142, .12);
+  color: #c9f1e4;
+}
+
+/* Checkbox row */
+.ttx-checkbox { display: flex; align-items: center; gap: 10px; color: var(--ttx-text-300); }
+
+/* Buttons: flat, high-contrast — use brand accent */
+.ttx-btn {
+  appearance: none;
+  user-select: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  border: 1px solid var(--ttx-border);
+  background: #0f1218;
+  color: var(--ttx-text-100);
+}
+.ttx-btn:disabled { opacity: .6; cursor: not-allowed; }
+.ttx-btn:focus-visible { outline: none; box-shadow: var(--ttx-focus); }
+
+.ttx-btn--primary {
+  background: var(--ttx-accent);
+  color: #16181e;
+  border-color: rgba(241, 87, 34, 0.85);
+}
+.ttx-btn--primary:hover { filter: brightness(0.95); }
+
+.ttx-btn--ghost {
+  background: transparent;
+  color: var(--ttx-text-300);
+}
+.ttx-btn--ghost:hover { color: var(--ttx-text-100); }
+
+.ttx-btn--neutral { background: #10131a; }
+
+.ttx-btn--danger {
+  background: var(--ttx-danger);
+  border-color: rgba(0,0,0,0.2);
+  color: #16181e;
+}
+.ttx-btn--danger:hover { filter: brightness(0.95); }
+
+/* Motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .ttx-modal { animation: none; opacity: 1; transform: none; }
+}

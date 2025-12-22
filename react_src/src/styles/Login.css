@@ -1,0 +1,190 @@
+@font-face {
+  font-family: 'Oswald';
+  src: url('../fonts/oswald-v56-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('../fonts/noto-sans-v39-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('../fonts/noto-sans-v39-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --plex-black: #0B0B0B;
+  --plex-gold: #f15722;
+  --plex-warm-gray: #3c434e;
+  --plex-white: #FFFFFF;
+  --radius-xl: 16px;
+
+  /* modal extras */
+  --gold-2: rgba(255,199,44,0.38);
+  --card-bg: rgba(10, 11, 14, 0.88);
+  --card-border: #2a2d33;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Noto Sans', sans-serif;
+  background: var(--plex-black);
+  overflow: hidden; /* fine for a full-screen login */
+}
+
+.login-wrapper {
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--plex-black);
+  position: relative;
+  z-index: 0;
+}
+
+.login-form {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 3rem 2rem;
+  max-width: 400px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+}
+
+.login-logo {
+  width: 240px;
+  margin-bottom: 1rem;
+}
+
+.login-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.6rem;
+  color: var(--plex-black);
+  margin: 0;
+  text-align: center;
+}
+
+.login-subtitle {
+  color: var(--plex-black);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-input {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+  border: 1px solid var(--plex-white);
+  background-color: rgb(0, 0, 0);
+  color: var(--plex-white);
+  font-size: 14px;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--plex-gold);
+  box-shadow: 0 0 0 2px var(--plex-gold);
+}
+
+.login-input:focus-visible {
+  outline: 2px solid var(--plex-gold);
+  outline-offset: 2px;
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--plex-gold);
+  color: var(--plex-black);
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.25s ease, opacity 0.2s ease;
+}
+
+.login-button:hover { background: #932703; }
+.login-button:focus-visible {
+  outline: 2px solid #fff5c2;
+  outline-offset: 2px;
+}
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-error {
+  background-color: rgba(255, 90, 90, 0.15);
+  color: #ff5a5a;
+  padding: 0.5rem;
+  width: 100%;
+  text-align: center;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.usg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.usg-modal {
+  width: min(760px, calc(100% - 32px));
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  color: var(--plex-white);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+  padding: 18px 18px 16px 18px;
+  position: relative;
+}
+
+.usg-modal-bar {
+  height: 6px;
+  background: linear-gradient(90deg, var(--gold-2), var(--plex-gold) 30%, var(--gold-2));
+  border-radius: 14px 14px 0 0;
+  position: absolute; top: 0; left: 0; right: 0;
+}
+
+.usg-title {
+  margin: 6px 0 8px;
+  font: 800 1.05rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  letter-spacing: .3px;
+}
+
+.usg-intro {
+  margin: 4px 0 10px;
+  color: #d8d8d8;
+  line-height: 1.4;
+}
+
+.usg-list { margin: 0 0 10px 18px; padding: 0; color: #eaeaea; }
+.usg-list li { margin: 6px 0; line-height: 1.35; }
+.usg-list .usg-small { font-size: 0.92rem; color: #cccccc; }
+
+.usg-actions { display: flex; justify-content: flex-end; }
+.usg-button { min-width: 160px; }

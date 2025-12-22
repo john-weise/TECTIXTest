@@ -1,0 +1,110 @@
+/* TopNav.css */
+
+:root {
+  --plex-black:#0b0b0b;
+  --plex-gold:#f15722;         /* brand accent */
+  --plex-white:#ffffff;
+
+  /* easy knobs */
+  --nav-h: 40px;               /* bar height */
+  --nav-logo: 34px;            /* logo size */
+  --nav-logo-sm: 24px;         /* small screens */
+}
+
+/* Full-bleed, fixed, 10px from top; LEFT aligned content */
+.top-nav--plex.top-nav--floating {
+  position: fixed;
+  top: 10px;
+  left: 0;
+  right: 0;
+  z-index: 30;
+
+  height: var(--nav-h);
+  width: 100%;
+  background: var(--plex-white);     /* 🔁 was var(--plex-gold) */
+  color: var(--plex-black);
+
+  padding-left: 16px;
+  padding-right: 16px;
+
+  border-bottom: 1px solid rgba(0,0,0,.08);     /* lighter on white */
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);       /* softer shadow on white */
+  backdrop-filter: blur(6px);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin: 0 0 16px 0;   /* space for underline peek */
+}
+
+/* subtle brand accent line under the bar */
+.top-nav--plex.top-nav--floating::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -10px;                    /* sits in the 16px gap */
+  height: 2px;
+  background: linear-gradient(90deg, var(--plex-gold), #ff8a45);
+  border-radius: 2px;
+}
+
+/* Left cluster */
+.nav-left { display:flex; align-items:center; gap:10px; min-width:0; }
+
+/* Bigger logo */
+.nav-logo--small {
+  width: var(--nav-logo);
+  height: var(--nav-logo);
+  object-fit: contain;
+  display: block;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Wordmark */
+.nav-brand {
+  font:700 .95rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  letter-spacing:.2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color: var(--plex-black);
+}
+
+/* Right cluster */
+.nav-right { display:flex; align-items:stretch; gap:6px; }
+
+/* Tabs */
+.nav-link {
+  appearance:none; border:none; background:transparent;
+  color:var(--plex-black);                        /* black on white */
+  font:700 .92rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  padding:0 12px; height:var(--nav-h);
+  display:inline-flex; align-items:center; cursor:pointer; position:relative;
+  border-radius:8px; transition:background-color 120ms ease, color 120ms ease;
+}
+.nav-link:hover { background:rgba(0,0,0,.06); }
+.nav-link:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(0,0,0,.25) inset; }
+
+/* Active underline (brand color so it reads against dark page bg) */
+.nav-link.active::after {
+  content:"";
+  position:absolute;
+  left:10px; right:10px;
+  bottom:-10px;
+  height:3px;
+  background: var(--plex-gold);     /* 🔁 was black */
+  border-radius:2px;
+}
+
+.nav-link--end { margin-left:6px; }
+
+/* Small screens */
+@media (max-width:560px){
+  .top-nav--plex.top-nav--floating { height: 44px; }
+  .nav-link { height:44px; padding:0 10px; font-size:.9rem; }
+  .nav-logo--small { width: var(--nav-logo-sm); height: var(--nav-logo-sm); }
+  .nav-brand { display:none; }
+}
+
+
+
+

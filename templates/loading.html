@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checklist Generator - Processing</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='loadingstyle.css') }}">
+    <script>
+        const eventSource = new EventSource("/stream_output/{{ system_id }}");
+    
+        eventSource.onmessage = function(event) {
+            const log = document.getElementById("log");
+            log.innerHTML += event.data + "<br>";
+            log.scrollTop = log.scrollHeight;
+    
+            if (event.data.trim() === "[DONE]") {
+                eventSource.close();
+                window.location.href = "/download?system_id={{ system_id }}";
+            }
+        };
+    
+        eventSource.onerror = function(error) {
+            console.error("Stream error:", error);
+            eventSource.close();
+        };
+    </script>
+    
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="card">
+            <h1>Generating Your Checklist...</h1>
+            <pre id="log" class="log-box"></pre>
+            <a id="download-link" href="{{ url_for('download') }}?system_id={{ system_id }}" class="download-button" style="display: none;">
+                Download Completed Checklist
+            </a>
+            <a href="{{ url_for('index') }}" class="start-over-button">
+                Start Over
+            </a>
+        </div>
+    </div>
+</body>
+</html>

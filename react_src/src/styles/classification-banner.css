@@ -1,0 +1,54 @@
+/* src/styles/classification-banner.css */
+:root {
+  --cui-purple: #2e7d32;
+  --banner-fg: #000000;
+}
+
+.classification-banner {
+  width: 100%;
+  color: var(--banner-fg);
+}
+
+.classification-banner--sticky {
+  position: sticky;  /* set to fixed if you want it always pinned */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+/* Base */
+.classification-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;    /* center contents */
+  padding: 6px 12px;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  border-bottom: 1px solid rgba(0,0,0,.35);
+  text-align: center;         /* safety */
+}
+
+.classification-banner__label {
+  display: block;
+  width: 100%;
+  text-align: center;         /* hard-center the text */
+}
+
+/* ~40% thickness (slim) */
+.classification-banner--dense .classification-banner__inner {
+  padding: 3px 10px;          /* barely more than text */
+  font-size: 12px;
+}
+
+/* Level colors */
+.classification-banner--cui        { background: var(--cui-purple); }
+.classification-banner--unclassified { background: #2e7d32; }
+.classification-banner--confidential { background: #1976d2; }
+.classification-banner--secret       { background: #d32f2f; }
+.classification-banner--topsecret    { background: #b71c1c; }
+
+

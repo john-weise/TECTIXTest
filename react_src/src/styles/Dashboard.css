@@ -1,0 +1,422 @@
+/* src/styles/Dashboard.css */
+
+/* Cohesive with Login.css / TopNav.css */
+:root {
+  --plex-black: #0B0B0B;
+  --plex-gold: #f15722;
+  --plex-warm-gray: #3c434e;
+  --plex-white: #FFFFFF;
+
+  --card-bg: rgba(18,18,18,0.92);
+  --card-border: #1a1a1a;
+  --radius: 12px;
+
+  /* Panel sizing */
+  --panel-min-h: 520px; /* grow the cards */
+}
+
+/* Page wrapper */
+.dashboard-wrapper {
+  position: relative;
+  min-height: 100vh;
+  background: var(--plex-black);
+  color: var(--plex-white);
+
+  /* Make room for the fixed nav (48px tall + 10px offset + gap) */
+  padding-top: 78px;
+}
+
+/* Background container (CyberBackground sits inside) */
+.dashboard-background-box {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Main content above bg */
+.dashboard-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+
+  /* Wider working area + consistent side gutters */
+  max-width: 1440px;
+  width: calc(100% - 48px);
+  margin: 0 auto;
+
+  /* Left panel scales between 480–680px, right takes remaining space */
+  grid-template-columns: clamp(480px, 38vw, 680px) 1fr;
+  gap: 28px;
+
+  /* vertical padding only; gutters handled by width calc */
+  padding: 24px 0;
+}
+
+/* Left panel (form card) */
+.left-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+  min-height: var(--panel-min-h);
+}
+
+.left-panel h2 { margin: 0 0 12px 0; }
+
+.section-title {
+  font-family: 'GI', 'Oswald', 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.25px;
+  margin: 0 0 6px 0;
+  color: var(--plex-white);
+}
+
+.gold-rule {
+  width: 52px;
+  height: 3px;
+  background: var(--plex-gold);
+  border-radius: 2px;
+  margin: 6px 0 12px 0;
+}
+
+/* Labels & helper text */
+.field-label {
+  display: block;
+  font: 600 0.9rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #e6e6e6;
+  margin-top: 8px;
+}
+
+.helper-text {
+  margin-top: 6px;
+  font-size: 0.86rem;
+  color: #bdbdbd;
+}
+
+/* Inputs */
+.system-id-input,
+.file-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 12px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--plex-warm-gray);
+  background: #121212;
+  color: var(--plex-white);
+  font: 400 0.95rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.system-id-input::placeholder { color: #9a9a9a; }
+
+.system-id-input:focus,
+.file-input:focus {
+  outline: none;
+  border-color: var(--plex-gold);
+  box-shadow: 0 0 0 3px rgba(255,199,44,0.35);
+}
+
+/* Selected filename */
+.file-name {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #cfcfcf;
+}
+
+/* Primary CTA */
+.generate-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--plex-gold);
+  color: var(--plex-black);
+  font: 700 1rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  cursor: pointer;
+  transition: transform 80ms ease, filter 120ms ease;
+}
+
+.generate-button:hover { filter: brightness(0.95); }
+.generate-button:active { transform: translateY(1px); }
+.generate-button:disabled { opacity: 0.65; cursor: not-allowed; }
+
+/* Download CTA (secondary but prominent) */
+.download-button {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  margin-top: 12px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--plex-gold);
+  color: var(--plex-gold);
+  text-decoration: none;
+  font: 700 0.98rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  transition: background 120ms ease, color 120ms ease;
+}
+.download-button:hover { background: --plex-gold; }
+
+/* Errors */
+.error-text {
+  background: rgba(255, 90, 90, 0.12);
+  border: 1px solid rgba(255, 90, 90, 0.35);
+  color: #ff8080;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+/* Right panel (log/output) */
+.right-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+  backdrop-filter: blur(8px);
+  padding: 0;
+  min-height: var(--panel-min-h);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle progress line while active (no JS needed) */
+.right-panel.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -30%;
+  height: 3px;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, var(--plex-gold), transparent);
+  animation: dash 2.4s ease-in-out infinite;
+}
+
+@keyframes dash {
+  0%   { left: -30%; }
+  50%  { left: 50%; }
+  100% { left: 110%; }
+}
+
+/* If LoadingScreen text needs padding */
+.log-output {
+  padding: 16px;
+  font: 400 0.92rem 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #47f801;
+  line-height: 1.4;
+}
+
+/* Legal disclaimer */
+.disclaimer {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #f15722;
+  line-height: 1.35;
+}
+
+/* Responsive layout */
+@media (max-width: 1200px) {
+  .dashboard-main {
+    grid-template-columns: clamp(420px, 44vw, 560px) 1fr;
+    gap: 24px;
+  }
+}
+@media (max-width: 980px) {
+  .dashboard-main {
+    grid-template-columns: 1fr;
+    width: calc(100% - 32px);
+  }
+  .right-panel { min-height: 360px; }
+}
+
+.grafana-embed-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.grafana-embed-status {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.grafana-embed-status--error {
+  color: #ff4d4f;
+}
+
+.grafana-embed-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 500px;
+  border-radius: 4px;
+}
+
+.grafana-embed-footer {
+  margin-top: 0.5rem;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+
+/* ───────── Executive Dashboards header + shared layout ───────── */
+
+.dashboard-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--plex-black);
+  color: var(--plex-white);
+
+  /* Clear the fixed TopNav (matches original dashboard-wrapper behavior) */
+  padding-top: 78px;
+  box-sizing: border-box;
+}
+
+.dashboard-page {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 40px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.dashboard-header-text {
+  max-width: 720px;
+}
+
+.dashboard-kicker {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--plex-gold);
+  opacity: 0.8;
+}
+
+.dashboard-title {
+  margin: 0 0 6px 0;
+  font-family: 'GI', 'Oswald', 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: 0.02em;
+}
+
+.dashboard-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #c3c7d1;
+  max-width: 640px;
+}
+
+/* Generic main card layout (can be reused on other pages) */
+.dashboard-main-card {
+  margin-top: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.6);
+  padding: 18px 18px 20px;
+  min-height: var(--panel-min-h);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive tweaks for shared dashboard layout */
+@media (max-width: 980px) {
+  .dashboard-page {
+    padding: 20px 16px 32px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-title {
+    font-size: 1.6rem;
+  }
+
+  .dashboard-main-card {
+    padding: 14px;
+    min-height: 380px;
+  }
+}
+
+/* ───────── Executive Dashboards full-page Grafana layout ───────── */
+
+.executive-root {
+  /* Uses .dashboard-root for base setup; kept for clarity/targeting if needed */
+}
+
+/* Let the executive page span the full viewport width */
+.executive-page {
+  max-width: none;
+  width: 100%;
+  padding: 24px 0 32px;
+}
+
+/* Make the Grafana card as wide as the screen minus 10px */
+.executive-main-card {
+  width: calc(100vw - 10px);
+  margin: 12px auto 0;
+  padding: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  /* viewport height minus nav + header */
+  min-height: calc(100vh - 78px - 120px);
+}
+
+/* Ensure the embedded Grafana fills the card */
+.executive-main-card .grafana-embed-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.executive-main-card .grafana-embed-frame {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+
+/* Slightly tighter header for this page */
+.executive-page .dashboard-header {
+  margin-bottom: 8px;
+}
+
+/* Executive layout responsive tweaks */
+@media (max-width: 980px) {
+  .executive-page {
+    width: calc(100% - 24px);
+    padding: 20px 0 24px;
+  }
+
+  .executive-main-card {
+    min-height: calc(100vh - 78px - 140px);
+    border-radius: 12px;
+  }
+}
+
+

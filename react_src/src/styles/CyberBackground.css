@@ -1,0 +1,80 @@
+/* Brand tokens expected elsewhere:
+   --plex-black: #0B0B0B; --plex-gold: #f15722; --plex-warm-gray, --plex-white
+*/
+:root{
+  --cbg-canvas: var(--plex-black, #0b0b0b);
+  --cbg-ink:    #0e1218;                 /* soft plate over canvas */
+  --brand-rgb:  241 87 34;               /* f15722 → R G B */
+
+  /* Vignette keeps content readable center */
+  --cbg-vignette: radial-gradient(120% 90% at 50% 50%, #0000 0%, #0005 58%, #000a 100%);
+
+  /* Intensity knobs (tuned via [data-intensity]) */
+  --mesh-sat: 0.9;
+  --mesh-opa: 0.18;
+  --sweep-opa: 0.22;
+}
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce){ .plex-bg *{ animation: none !important; } }
+
+/* base container */
+.plex-bg{
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--cbg-canvas);
+}
+
+/* ===== Gradient Mesh + Light Sweep ===== */
+.plex-bg--mesh{
+  isolation: isolate;
+  background-image:
+    /* subtle ink plate + vignette */
+    radial-gradient(120% 85% at 50% 35%, var(--cbg-ink), #0000 40%),
+    var(--cbg-vignette),
+
+    /* mesh stops (warm, very low saturation) */
+    radial-gradient(52% 42% at 18% 20%, rgb(var(--brand-rgb) / calc(var(--mesh-opa) * .9)) 0%, #0000 60%),
+    radial-gradient(40% 48% at 84% 26%, rgb(255 180 120 / calc(var(--mesh-opa) * .6)) 0%, #0000 58%),
+    radial-gradient(60% 55% at 62% 78%, rgb(255 140 80 / calc(var(--mesh-opa) * .5)) 0%, #0000 66%);
+  filter: saturate(var(--mesh-sat)) contrast(1.02);
+}
+
+/* faint diagonal light sweep */
+.plex-bg--mesh::after{
+  content:"";
+  position:absolute; inset:-25%;
+  background:
+    linear-gradient(100deg, #fff0 0%, #ffffff20 50%, #fff0 100%);
+  mix-blend-mode: soft-light;
+  transform: translate3d(-65%, -8%, 0) rotate(8deg);
+  animation: cbg-sweep 24s ease-in-out infinite;
+  opacity: var(--sweep-opa);
+}
+
+@keyframes cbg-sweep{
+  0%   { transform: translate3d(-65%, -8%, 0) rotate(8deg); opacity: calc(var(--sweep-opa) * .8); }
+  50%  { transform: translate3d(65%, 8%, 0)  rotate(8deg); opacity: calc(var(--sweep-opa) * 1.1); }
+  100% { transform: translate3d(-65%, -8%, 0) rotate(8deg); opacity: calc(var(--sweep-opa) * .8); }
+}
+
+/* ===== intensity presets ===== */
+.plex-bg[data-intensity="quiet"]{
+  --mesh-sat: 0.85;
+  --mesh-opa: 0.14;
+  --sweep-opa: 0.18;
+}
+
+.plex-bg[data-intensity="normal"]{
+  --mesh-sat: 0.95;
+  --mesh-opa: 0.20;
+  --sweep-opa: 0.24;
+}
+
+.plex-bg[data-intensity="bold"]{
+  --mesh-sat: 1.05;
+  --mesh-opa: 0.28;
+  --sweep-opa: 0.28;
+}
+
+/* keep dark canvas even in light mode for brand consistency */
+@media (prefers-color-scheme: light){ :root{ --cbg-canvas: var(--plex-black, #0b0b0b); } }

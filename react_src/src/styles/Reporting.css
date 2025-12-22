@@ -1,0 +1,297 @@
+:root{
+  /* Base palette */
+  --bg:#0b0b0f;
+  --panel:#141419;
+  --panel-2:#1a1a21;
+  --text:#EAEAF2;
+  --muted:#9AA0A6;
+  --border:#262632;
+
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --neutral:#6b7280;
+
+  --chip:#202028;
+  --chip-bd:#2a2a36;
+
+  --accent:#3b82f6;
+
+  /* Brand orange set (aligns with top bar) */
+  --plex-gold:#f15722;
+  --plex-gold-500:#ff7a2f;
+  --plex-gold-600:#f15722;
+  --plex-gold-700:#d94c1e;
+}
+
+/* Page */
+.reporting-page{
+  color:var(--text);
+  background:var(--bg);
+  min-height:100vh;
+  padding:28px;
+}
+
+.card{
+  background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding:16px 18px;
+}
+
+.card.error{
+  border-color:#402020;
+  color:#ffb4b4;
+}
+
+.top-grid{
+  display:grid;
+  grid-template-columns: 1fr 380px;
+  gap:16px;
+  margin-bottom:18px;
+}
+@media (max-width: 980px){
+  .top-grid{ grid-template-columns: 1fr; }
+}
+
+.top-card .system-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.eyebrow{
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.system-id{
+  font-size:28px;
+  font-weight:700;
+}
+
+/* Meta grid */
+.meta{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+}
+.meta div{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+}
+.meta span{
+  display:block; font-size:12px; color:var(--muted); margin-bottom:4px;
+}
+.meta code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size:13px;
+  color:#cbd5e1;
+  word-break:break-all;
+}
+
+/* Gauge */
+.gauge-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.gauge-wrap{ position:relative; display:inline-block; }
+.gauge-center{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.gauge-score{ font-size:28px; font-weight:800; }
+.gauge-sub{ font-size:12px; color:var(--muted); }
+
+.legends{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.chip{
+  background:var(--chip);
+  border:1px solid var(--chip-bd);
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+}
+.chip-pass{ border-color: rgba(34,197,94,.35); color:#bbf7d0; }
+.chip-concern{ border-color: rgba(245,158,11,.35); color:#fde68a; }
+.chip-fail{ border-color: rgba(239,68,68,.35); color:#fecaca; }
+.chip-neutral{ color:#cbd5e1; }
+
+/* Controls (TestTable header) */
+.controls{ margin-bottom:12px; }
+.control-row{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.control-row label{ font-size:13px; color:var(--muted); }
+.control-row select{
+  background:#16161c;
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:10px;
+}
+
+.hint{ font-size:12px; color:#cbd5e1; }
+.hint.muted{ color:var(--muted); }
+
+/* Table */
+.table-wrap{ padding:0; }
+.table-scroll{
+  max-height:64vh;
+  overflow:auto;
+  border-radius:16px;
+}
+.sheet{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+}
+.sheet thead th{
+  position:sticky; top:0;
+  background:#101015;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-weight:600;
+  padding:12px 10px;
+  font-size:13px;
+}
+.sheet tbody td{
+  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  font-size:13px;
+}
+.col-idx{ width:64px; color:var(--muted); }
+.col-status{ width:120px; }
+
+/* Pills + row glows */
+.pill{
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid transparent;
+}
+.pill-pass{ background:rgba(34,197,94,.12); color:#86efac; border-color:rgba(34,197,94,.35); }
+.pill-concern{ background:rgba(245,158,11,.12); color:#fcd34d; border-color:rgba(245,158,11,.35); }
+.pill-fail{ background:rgba(239,68,68,.12); color:#fca5a5; border-color:rgba(239,68,68,.35); }
+.pill-neutral{ background:rgba(148,163,184,.12); color:#cbd5e1; border-color:rgba(148,163,184,.25); }
+
+.row-pass td{ background: linear-gradient(90deg, rgba(34,197,94,.05), transparent 30%); }
+.row-concern td{ background: linear-gradient(90deg, rgba(245,158,11,.05), transparent 30%); }
+.row-fail td{ background: linear-gradient(90deg, rgba(239,68,68,.05), transparent 30%); }
+
+.muted{ color:var(--muted); }
+.empty{ text-align:center; padding:30px 10px; }
+
+/* ===== New: Branded Download CTA ===== */
+.plex-btn{
+  --h:40px;
+  height:var(--h);
+  padding:0 14px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.35);
+  font-weight:700;
+  font-size:.95rem;
+  letter-spacing:.2px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  text-decoration:none;
+  transition:
+    transform 80ms ease,
+    box-shadow 160ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    opacity 140ms ease;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plex-btn .icon{ display:block; flex:0 0 auto; }
+
+.plex-btn--download{
+  color:#0b0b0b;
+  background: linear-gradient(180deg, var(--plex-gold-500), var(--plex-gold-600));
+  border-color: var(--plex-gold-700);
+  box-shadow:
+    0 6px 18px rgba(241,87,34,.22),
+    inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+.plex-btn--download .icon{ color:#0b0b0b; }
+
+.plex-btn--download:hover{
+  background: linear-gradient(180deg, #ff8a45, var(--plex-gold-500));
+  box-shadow:
+    0 8px 24px rgba(241,87,34,.28),
+    inset 0 1px 0 rgba(255,255,255,.16);
+}
+
+.plex-btn--download:active{
+  transform: translateY(1px);
+  box-shadow:
+    0 4px 12px rgba(241,87,34,.22),
+    inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+.plex-btn--download:focus-visible{
+  outline:none;
+  box-shadow:
+    0 0 0 2px #000,
+    0 0 0 4px rgba(241,87,34,.55),
+    0 8px 24px rgba(241,87,34,.25);
+}
+
+.plex-btn[aria-busy="true"],
+.plex-btn[disabled]{
+  opacity:.75;
+  cursor:not-allowed;
+  filter:saturate(.9);
+}
+
+/* Optional small variant if needed elsewhere */
+.plex-btn--sm{ --h:34px; padding:0 12px; font-size:.9rem; border-radius:9px; }
+
+/* Ensure links styled as buttons don't inherit global anchor hover color */
+a.plex-btn { color: inherit; text-decoration: none; }
+a.plex-btn:hover,
+a.plex-btn:focus { text-decoration: none; }
+
+/* Download button: make text + icon white on hover/focus */
+.plex-btn--download:hover,
+.plex-btn--download:focus-visible {
+  color: #fff;                 /* label turns white */
+}
+
+.plex-btn--download:hover .icon,
+.plex-btn--download:focus-visible .icon {
+  color: #fff;                 /* icon turns white too */
+}
+
+/* (optional) if you wrap text in a .label span, keep it consistent */
+.plex-btn--download:hover .label,
+.plex-btn--download:focus-visible .label {
+  color: #fff;
+}
+
+.pill-na {
+  background: rgba(148,163,184,.12);
+  color: #e5e7eb;
+  border: 1px solid rgba(148,163,184,.25);
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+

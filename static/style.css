@@ -1,0 +1,78 @@
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background-color: #e9eef3;
+    margin: 0;
+    padding: 40px 20px;
+    color: #333;
+  }
+  
+  .page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 90vh;
+  }
+  
+  .card {
+    background-color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .brand-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  
+  .brand-logo {
+    height: 60px;
+    margin-bottom: 10px;
+  }
+  
+  .brand-header h1 {
+    font-size: 24px;
+    margin-bottom: 5px;
+  }
+  
+  .brand-header p {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  form label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+  }
+  
+  form input[type="text"],
+  form input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    background-color: #fdfdfd;
+  }
+  
+  form button {
+    margin-top: 25px;
+    padding: 12px;
+    width: 100%;
+    background-color: #0074d9;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  form button:hover {
+    background-color: #005fa3;
+  }
+  
