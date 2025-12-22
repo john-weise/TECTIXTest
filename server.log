@@ -1,0 +1,8 @@
+[2025-07-31 11:21:49,592] INFO from 127.0.0.1: [LOGIN ATTEMPT] ip=127.0.0.1 payload={'username': 'alice', 'password': 'wonderland'}
+[2025-07-31 11:21:49,773] INFO from 127.0.0.1: [LOGIN SUCCESS] ip=127.0.0.1 user=alice
+[2025-07-31 11:32:15,154] INFO from 127.0.0.1: [LOGIN ATTEMPT] ip=127.0.0.1 payload={'username': 'alice', 'password': 'wonderland'}
+[2025-07-31 11:32:15,427] INFO from 127.0.0.1: [LOGIN SUCCESS] ip=127.0.0.1 user=alice
+[2025-08-01 21:29:16,989] INFO from 127.0.0.1: [LOGIN ATTEMPT] ip=127.0.0.1 payload={'username': 'bob', 'password': 'builder'}
+[2025-08-01 21:29:17,105] INFO from 127.0.0.1: [LOGIN SUCCESS] ip=127.0.0.1 user=bob
+[2025-08-01 21:41:31,624] INFO from 127.0.0.1: [LOGIN ATTEMPT] ip=127.0.0.1 payload={'username': 'bob', 'password': 'builder'}
+[2025-08-01 21:41:31,838] INFO from 127.0.0.1: [LOGIN SUCCESS] ip=127.0.0.1 user=bob

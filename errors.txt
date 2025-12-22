@@ -1,0 +1,10 @@
+[PS] Select-Object: /app/scripts/ATOaas.ps1:2479
+[PS] Line |
+[PS] 2479 |  … data.data | Select-Object -ExpandProperty privacyImpactAssessmentRequ …
+[PS]      |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[PS]      | Property "privacyImpactAssessmentRequired" cannot be found.
+
+
+/usr/local/lib/python3.9/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Data Validation extension is not supported and will be removed
+  warn(msg)
+[ERROR] Excel update failed: 'Worksheet PISSM_Checklist does not exist.'

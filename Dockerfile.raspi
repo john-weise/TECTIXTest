@@ -1,0 +1,39 @@
+
+FROM redhat/ubi9:latest
+
+
+WORKDIR /app
+COPY . /app
+
+
+ENV PYTHONUNBUFFERED=1
+ENV ATOAAS_ALLOW_NO_DB=1
+ENV FLASK_SECRET_KEY="9J5zf4JKTQVc_LerK4Er593ydpsw4cDF-RpLjPqKVTj2j5ftzs3M0XsB36szQ1k0IkNIEwai2U7Lu-kC7HAHlQ=="
+ENV JWT_SECRET_KEY="BUxpnRveoTG5A1ZVaRGPQYpwleNpwW8fdL6sceTeGrGbDWrCZgxu03Y18rCezPQjIBop8hPwsAfZ4BWsmcWusg=="
+
+RUN dnf -y --allowerasing update && \
+    dnf -y --allowerasing install \
+      python3 \
+      python3-pip \
+      curl \
+      unzip \
+      less \
+      ca-certificates \
+      openssl-devel \
+      libicu && \
+    update-ca-trust extract && \
+    dnf clean all
+
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+
+ENV POWERSHELL_VERSION=7.4.1
+
+RUN curl -L https://github.com/PowerShell/PowerShell/releases/download/v$POWERSHELL_VERSION/powershell-$POWERSHELL_VERSION-linux-arm64.tar.gz -o /tmp/powershell.tar.gz && \
+    mkdir -p /opt/microsoft/powershell/7 && \
+    tar -xzf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
+    ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
+    rm /tmp/powershell.tar.gz
+
+EXPOSE 5000
+CMD ["gunicorn", "--capture-output", "--enable-stdio-inheritance", "-b", "0.0.0.0:5000", "flaskapp:app", "--workers", "1", "--threads", "8", "--timeout", "600"]

@@ -1,0 +1,1001 @@
+# Auto-generated model sketch (nested-aware)
+# Source directory: "/home/sanity/workStuff/TECTIXv2/engine/Notionalassets"
+from typing import Any, Dict, List, Optional, Union
+from pydantic import BaseModel
+
+# ------------------------------------------------------------
+# Source: Artifactdetails
+class Artifactdetails(BaseModel):
+    data: List[Artifactdetails_DataItem]
+    meta: Artifactdetails_Meta
+    pagination: Artifactdetails_Pagination
+
+# ------------------------------------------------------------
+# Source: Artifactdetails_DataItem
+class Artifactdetails_DataItem(BaseModel):
+    ap_associations: str
+    artifact_name: str
+    authorization_status: str
+    authorization_termination_date: str
+    category: str
+    control_associations: str
+    created_by: str
+    created_date: str
+    description: str
+    download_url: str
+    expiration_date: str
+    filename: str
+    inherited_from: str
+    last_modified: str
+    last_reviewed: str
+    organization: str
+    organization_hierarchy: str
+    policy: str
+    reference: str
+    registration_type: str
+    remote_inheritance_instance: str
+    signed_date: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    template: str
+    type: str
+
+# ------------------------------------------------------------
+# Source: Artifactdetails_Meta
+class Artifactdetails_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Artifactdetails_Pagination
+class Artifactdetails_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Artifactsummary
+class Artifactsummary(BaseModel):
+    data: List[Artifactsummary_DataItem]
+    meta: Artifactsummary_Meta
+    pagination: Artifactsummary_Pagination
+
+# ------------------------------------------------------------
+# Source: Artifactsummary_DataItem
+class Artifactsummary_DataItem(BaseModel):
+    artifacts_w_o_control_ap_associations: str
+    authorization_status: str
+    authorization_termination_date: str
+    expired_artifacts: str
+    expiring_artifacts: str
+    inherited_artifacts: str
+    organization: str
+    organization_hierarchy: str
+    policy: str
+    registration_type: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    total_artifacts: str
+
+# ------------------------------------------------------------
+# Source: Artifactsummary_Meta
+class Artifactsummary_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Artifactsummary_Pagination
+class Artifactsummary_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Associations
+class Associations(BaseModel):
+    data: List[Associations_DataItem]
+    meta: Associations_Meta
+    pagination: Associations_Pagination
+
+# ------------------------------------------------------------
+# Source: Associations_DataItem
+class Associations_DataItem(BaseModel):
+    aps_provided: str
+    aps_received: str
+    associated_system_acronym: str
+    associated_system_id: str
+    associated_system_name: str
+    authorization_status: str
+    authorization_termination_date: str
+    controls_provided: str
+    controls_received: str
+    date_established: str
+    external_system: str
+    organization: str
+    owning_organization: str
+    relationship_description: str
+    relationship_type: str
+    remote_inheritance_instance: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    system_type: str
+
+# ------------------------------------------------------------
+# Source: Associations_Meta
+class Associations_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Associations_Pagination
+class Associations_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: CAC
+class CAC(BaseModel):
+    data: List[CAC_DataItem]
+    meta: CAC_Meta
+
+# ------------------------------------------------------------
+# Source: CAC_DataItem
+class CAC_DataItem(BaseModel):
+    compliancestatus: str
+    controlacronym: str
+    currentstage: int
+    currentstagename: str
+    systemid: int
+    totalstages: int
+
+# ------------------------------------------------------------
+# Source: CAC_Meta
+class CAC_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Controls
+class Controls(BaseModel):
+    data: List[Controls_DataItem]
+    meta: Controls_Meta
+
+# ------------------------------------------------------------
+# Source: Controls_DataItem
+class Controls_DataItem(BaseModel):
+    acronym: str
+    ccis: str
+    compliancestatus: str
+    controldesignation: str
+    estimatedcompletiondate: float
+    impact: Optional[Any]
+    impactdescription: Optional[Any]
+    implementationnarrative: str
+    implementationstatus: str
+    includedstatus: str
+    isinherited: bool
+    likelihood: Optional[Any]
+    mitigations: Optional[Any]
+    modifiedbyoverlays: Optional[Any]
+    name: str
+    recommendations: Optional[Any]
+    relevanceofthreat: Optional[Any]
+    residualrisklevel: Optional[Any]
+    responsibleentities: str
+    severity: Optional[Any]
+    slcmcomments: str
+    slcmcriticality: str
+    slcmfrequency: str
+    slcmmethod: str
+    slcmreporting: str
+    slcmtracking: str
+    systemid: int
+    testmethod: Optional[Any]
+    vulnerabilitysummary: Optional[Any]
+
+# ------------------------------------------------------------
+# Source: Controls_Meta
+class Controls_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Findings
+class Findings(BaseModel):
+    data: List[Findings_DataItem]
+    meta: Findings_Meta
+    pagination: Findings_Pagination
+
+# ------------------------------------------------------------
+# Source: Findings_DataItem
+class Findings_DataItem(BaseModel):
+    benchmark: str
+    first_seen_date: str
+    hostname: str
+    ingested_date: str
+    last_scan_date: str
+    nickname: str
+    organization: str
+    organization_hierarchy: str
+    raw_severity: str
+    result: str
+    scan_type: str
+    security_check: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    version_release: str
+
+# ------------------------------------------------------------
+# Source: Findings_Meta
+class Findings_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Findings_Pagination
+class Findings_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Hardware
+class Hardware(BaseModel):
+    data: List[Hardware_DataItem]
+    meta: Hardware_Meta
+    pagination: Hardware_Pagination
+
+# ------------------------------------------------------------
+# Source: Hardware_DataItem
+class Hardware_DataItem(BaseModel):
+    authorization_status: str
+    hardware_matching_criteria: str
+    organization: str
+    organization_hierarchy: str
+    policy: str
+    registration_completion_date: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    total_hardware_assets: str
+
+# ------------------------------------------------------------
+# Source: Hardware_Meta
+class Hardware_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Hardware_Pagination
+class Hardware_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Hardwaredetailsdashboard
+class Hardwaredetailsdashboard(BaseModel):
+    data: List[Hardwaredetailsdashboard_DataItem]
+    meta: Hardwaredetailsdashboard_Meta
+    pagination: Hardwaredetailsdashboard_Pagination
+
+# ------------------------------------------------------------
+# Source: Hardwaredetailsdashboard_DataItem
+class Hardwaredetailsdashboard_DataItem(BaseModel):
+    domain: str
+    fqdn: str
+    host_name: str
+    ip_address: str
+    last_scan_date: str
+    mac_address: str
+    manufacturer: str
+    model: str
+    nickname: str
+    operating_system_os: str
+    organization: str
+    organization_hierarchy: str
+    record_identifier: str
+    resource: str
+    serial_number: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+
+# ------------------------------------------------------------
+# Source: Hardwaredetailsdashboard_Meta
+class Hardwaredetailsdashboard_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Hardwaredetailsdashboard_Pagination
+class Hardwaredetailsdashboard_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Initialtest
+class Initialtest(BaseModel):
+    data: Initialtest_Data
+    meta: Initialtest_Meta
+
+# ------------------------------------------------------------
+# Source: Initialtest_Data
+class Initialtest_Data(BaseModel):
+    success: bool
+
+# ------------------------------------------------------------
+# Source: Initialtest_Meta
+class Initialtest_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Poams
+class Poams(BaseModel):
+    data: List[Poams_DataItem]
+    meta: Poams_Meta
+    pagination: Poams_Pagination
+
+# ------------------------------------------------------------
+# Source: Poams_DataItem
+class Poams_DataItem(BaseModel):
+    artifacts: str
+    assessmentprocedure: Optional[Any]
+    comments: str
+    completiondate: Optional[Any]
+    conditionid: Optional[Any]
+    controlacronym: str
+    createddate: float
+    displaypoamid: int
+    extensiondate: Optional[Any]
+    externaluid: Optional[Any]
+    identifiedincfoauditorotherreview: bool
+    impact: str
+    impactdescription: str
+    isinherited: bool
+    likelihood: str
+    milestones: str
+    mitigations: str
+    pendingextensiondate: Optional[Any]
+    poamid: int
+    pocemail: str
+    pocfirstname: str
+    poclastname: str
+    pocorganization: str
+    pocphonenumber: str
+    rawseverity: str
+    recommendations: str
+    relevanceofthreat: str
+    residualrisklevel: str
+    resources: str
+    reviewstatus: str
+    scheduledcompletiondate: float
+    securitychecks: str
+    severity: str
+    sourceidentifyingvulnerability: str
+    status: str
+    systemid: int
+    vulnerabilitydescription: str
+
+# ------------------------------------------------------------
+# Source: Poams_Meta
+class Poams_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Poams_Pagination
+class Poams_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Privacy
+class Privacy(BaseModel):
+    data: List[Privacy_DataItem]
+    meta: Privacy_Meta
+    pagination: Privacy_Pagination
+
+# ------------------------------------------------------------
+# Source: Privacy_DataItem
+class Privacy_DataItem(BaseModel):
+    atos_in_current_fy: str
+    authorization_status: str
+    controlled_unclassified_information_cui: str
+    hipaa_coverage: str
+    organization: str
+    organization_hierarchy: str
+    personally_identifiable_information_pii: str
+    pia_date: int
+    pia_required: str
+    pia_status: str
+    policy: str
+    privacy_overlay_applied: str
+    privacy_overlays_responses: str
+    protected_health_information_phi: str
+    registration_completion_date: int
+    registration_type: str
+    system_acronym: str
+    system_id: str
+    system_life_cycle_acquisition_phase: str
+    system_name: str
+    system_of_records_notice_required: str
+    system_type: str
+
+# ------------------------------------------------------------
+# Source: Privacy_Meta
+class Privacy_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Privacy_Pagination
+class Privacy_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Software
+class Software(BaseModel):
+    data: List[Software_DataItem]
+    meta: Software_Meta
+    pagination: Software_Pagination
+
+# ------------------------------------------------------------
+# Source: Software_DataItem
+class Software_DataItem(BaseModel):
+    authorization_status: str
+    licenses_used: str
+    organization: str
+    organization_hierarchy: str
+    policy: str
+    registration_completion_date: int
+    software_matching_criteria: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    total_licenses: str
+    total_software_assets: str
+
+# ------------------------------------------------------------
+# Source: Software_Meta
+class Software_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Software_Pagination
+class Software_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Softwaredetailsdashboard
+class Softwaredetailsdashboard(BaseModel):
+    data: List[Softwaredetailsdashboard_DataItem]
+    meta: Softwaredetailsdashboard_Meta
+    pagination: Softwaredetailsdashboard_Pagination
+
+# ------------------------------------------------------------
+# Source: Softwaredetailsdashboard_DataItem
+class Softwaredetailsdashboard_DataItem(BaseModel):
+    approval_date: str
+    approval_status: str
+    cost_per_license: str
+    critical_asset: str
+    cryptographic_hash: str
+    date_reviewed_updated: str
+    end_of_life_support_date: str
+    extended_end_of_life_support_date: str
+    fiscal_year_fy: str
+    hosting_environment: str
+    in_service_data: str
+    it_budget_uii: str
+    license_expiration_date: str
+    license_or_contract: str
+    license_poc: str
+    license_renewal_date: str
+    license_term: str
+    licenses_used: str
+    location: str
+    maintenance_date: str
+    network: str
+    organization: str
+    parent_system: str
+    poc_email: str
+    poc_first_name: str
+    poc_last_name: str
+    poc_office_organization: str
+    poc_phone_number: str
+    pop_end_date: str
+    purpose: str
+    release_date: str
+    retirement_date: str
+    reviewed_updated_by: str
+    software_dependencies: str
+    software_name: str
+    software_type: str
+    software_vendor: str
+    software_version: str
+    subsystem: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    system_type: str
+    total_license_cost: str
+    total_licenses: str
+
+# ------------------------------------------------------------
+# Source: Softwaredetailsdashboard_Meta
+class Softwaredetailsdashboard_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Softwaredetailsdashboard_Pagination
+class Softwaredetailsdashboard_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Systemdetailsdashboard
+class Systemdetailsdashboard(BaseModel):
+    data: List[Systemdetailsdashboard_DataItem]
+    meta: Systemdetailsdashboard_Meta
+    pagination: Systemdetailsdashboard_Pagination
+
+# ------------------------------------------------------------
+# Source: Systemdetailsdashboard_DataItem
+class Systemdetailsdashboard_DataItem(BaseModel):
+    applied_overlays: str
+    atc_decision: str
+    atc_decision_date: int
+    atc_termination_date: str
+    atd: int
+    authorization_date: int
+    authorization_status: str
+    availability: str
+    baseline_location: str
+    city_primary_location: str
+    cloud_computing: str
+    confidentiality: str
+    controlled_unclassified_information_cui: str
+    current_ao: str
+    cybersecurity_service_provider: str
+    cybersecurity_service_provider_exception_justification: str
+    data_id: str
+    days_to_annual_review: str
+    days_to_atd: str
+    days_to_reported_atd: str
+    deployment_locations: str
+    dod_confidentiality: str
+    financial_management_system: str
+    governing_mission_area: str
+    highest_system_data_classification: str
+    impact: str
+    installation_name_primary_location: str
+    integrity: str
+    iso_pm: str
+    lifecycle_acquisition_phase: str
+    location_in_pac: str
+    mac: str
+    mission_criticality: str
+    mission_portfolio: str
+    national_security_system: str
+    need_date: str
+    nss_questionnaire_completed: str
+    organization_hierarchy: str
+    organization_name: str
+    overall_risk_score: str
+    package_created: int
+    package_days_at_role: str
+    package_name: str
+    package_type: str
+    personally_identifiable_information_pii: str
+    protected_health_information_phi: str
+    public_facing_component_presence: str
+    reciprocity_system: str
+    registration_completion_date: int
+    registration_type: str
+    reported_atd: int
+    reported_authorization_date: int
+    reported_authorization_status: str
+    reported_policy: str
+    rmf_activity: str
+    security_controls_assessor_executive_summary: str
+    special_type: str
+    special_type_description: str
+    state_primary_location: str
+    street_address_primary_location: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    system_policy: str
+    system_type: str
+    terms_conditions_for_authorization_summary: str
+    terms_conditions_for_connection_summary: str
+    type_authorization: str
+    version_release_number: str
+    whitelist_id: str
+    zip_code_primary_location: str
+
+# ------------------------------------------------------------
+# Source: Systemdetailsdashboard_Meta
+class Systemdetailsdashboard_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Systemdetailsdashboard_Pagination
+class Systemdetailsdashboard_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Systeminfo
+class Systeminfo(BaseModel):
+    data: List[Systeminfo_DataItem]
+    meta: Systeminfo_Meta
+
+# ------------------------------------------------------------
+# Source: Systeminfo_DataItem
+class Systeminfo_DataItem(BaseModel):
+    acquisitioncategory: str
+    acronym: str
+    appliedoverlays: str
+    appliedstigs: str
+    atciatcexpirationdate: Optional[Any]
+    atciatcgranteddate: Optional[Any]
+    atciatcpendingitems: str
+    authorizationdate: int
+    authorizationlength: int
+    authorizationstatus: str
+    authorizationtoconnectstatus: Optional[Any]
+    authterminationdate: int
+    availability: str
+    businessimpactanalysisartifact: Optional[Any]
+    businessimpactanalysisrequired: Optional[Any]
+    cloudcomputing: bool
+    cloudtype: Optional[Any]
+    confidentiality: str
+    connectivityauthorizationdate: Optional[Any]
+    connectivityauthorizationterminationdate: Optional[Any]
+    connectivityccsd: List[str]
+    contingencyplanartifact: str
+    contingencyplanrequired: bool
+    contingencyplantestdate: float
+    contingencyplantested: bool
+    crossdomainticket: Optional[Any]
+    currentrmflifecyclestep: Optional[Any]
+    cybersecurityserviceprovider: str
+    cybersecurityserviceproviderexceptionjustification: Optional[Any]
+    dataid: str
+    description: str
+    disasterrecoveryplanartifact: str
+    disasterrecoveryplanrequired: bool
+    eauthenticationriskassessmentartifact: Optional[Any]
+    eauthenticationriskassessmentdate: Optional[Any]
+    eauthenticationriskassessmentrequired: bool
+    governingmissionarea: str
+    hascui: bool
+    hasphi: bool
+    haspii: bool
+    highestsystemdataclassification: str
+    impact: str
+    incidentresponseplanartifact: str
+    incidentresponseplanrequired: bool
+    instance: str
+    integrity: str
+    interconnectedinformationsystemsandidentifiers: str
+    ipv4ipv6dualstackassets: Optional[Any]
+    ipv4onlyassets: Optional[Any]
+    ipv6onlyassets: Optional[Any]
+    isfinancialmanagement: bool
+    ishrr: Optional[Any]
+    isiaas: bool
+    isnss: bool
+    ispaas: bool
+    ispublicfacing: bool
+    isreciprocity: bool
+    issaas: bool
+    istypeauthorization: bool
+    maximumtolerabledowntime: Optional[Any]
+    missioncriticality: str
+    missionportfolio: Optional[Any]
+    name: str
+    needdate: Optional[Any]
+    nextsecurityreviewduedate: int
+    otherinformation: Optional[Any]
+    otherservicemodels: Optional[Any]
+    overallriskscore: str
+    owningorganization: str
+    package: Optional[Any]
+    pendingitemsduedate: Optional[Any]
+    policy: str
+    ppsmregistrationexemptionjustification: Optional[Any]
+    ppsmregistrationrequired: bool
+    ppsmregistrynumber: str
+    primarycontrolset: str
+    primaryfunctionalarea: Optional[Any]
+    privacyactsystemofrecordsnoticerequired: bool
+    privacyimpactassessmentartifact: str
+    privacyimpactassessmentdate: float
+    privacyimpactassessmentrequired: bool
+    privacyimpactassessmentstatus: str
+    privacythresholdanalysisartifact: Optional[Any]
+    privacythresholdanalysiscompleted: Optional[Any]
+    privacythresholdanalysisdate: Optional[Any]
+    reciprocityexemption: Optional[Any]
+    recoverypointobjective: Optional[Any]
+    recoverytimeobjective: Optional[Any]
+    registrationcompletiondate: float
+    registrationtype: str
+    reportsforscorecard: bool
+    rmfactivity: str
+    secondaryfunctionalarea: Optional[Any]
+    secondaryorganization: Optional[Any]
+    securitycontrolsassessorexecutivesummary: str
+    securityplanapprovaldate: int
+    securityplanapprovalstatus: str
+    securityreviewcompleted: bool
+    securityreviewcompletiondate: int
+    securityreviewrequired: bool
+    softwarecategory: str
+    specialtype: Optional[Any]
+    specialtypedescription: Optional[Any]
+    systemid: int
+    systemlifecycleacquisitionphase: str
+    systemownershipcontrolled: str
+    systemtype: str
+    termsforauth: str
+    totalipassets: Optional[Any]
+    userdefinedfield1: Optional[Any]
+    userdefinedfield2: Optional[Any]
+    userdefinedfield3: Optional[Any]
+    userdefinedfield4: Optional[Any]
+    userdefinedfield5: Optional[Any]
+    versionreleaseno: str
+    whitelistid: str
+    whitelistinventory: str
+
+# ------------------------------------------------------------
+# Source: Systeminfo_Meta
+class Systeminfo_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Systempoamdashboard
+class Systempoamdashboard(BaseModel):
+    data: List[Systempoamdashboard_DataItem]
+    meta: Systempoamdashboard_Meta
+    pagination: Systempoamdashboard_Pagination
+
+# ------------------------------------------------------------
+# Source: Systempoamdashboard_DataItem
+class Systempoamdashboard_DataItem(BaseModel):
+    artifact_attachments: str
+    comments: str
+    completion_date: str
+    condition_id: str
+    control_criticality: str
+    control_implementation_status: str
+    control_title: str
+    controls_aps: str
+    created_date: str
+    extension_date: str
+    id: str
+    identified_in_cfo_audit_or_other_review: str
+    impact: str
+    impact_description: str
+    last_modified_date: str
+    latest_milestone_description: str
+    likelihood: str
+    milestone_created_date: str
+    milestone_review_status: str
+    milestone_scheduled_completion_date: str
+    mitigations: str
+    modified_by: str
+    non_personnel_cost_code: str
+    non_personnel_funded_amount: str
+    non_personnel_non_funded_obstacle_other_reason: str
+    non_personnel_non_funding_obstacle: str
+    non_personnel_unfunded_amount: str
+    organization: str
+    pending_extension_date: str
+    personnel_cost_code: str
+    personnel_funded_base_hours: str
+    personnel_non_funded_obstacle_other_reason: str
+    personnel_non_funding_obstacle: str
+    personnel_unfunded_base_hours: str
+    poam_item_review_status: str
+    poam_item_status: str
+    poam_url: str
+    poc: str
+    policy: str
+    raw_severity: str
+    recommendations: str
+    recommended_likelihood: str
+    recommended_residual_risk: str
+    relevance_of_threat: str
+    remote_inheritance_instance: str
+    residual_risk: str
+    resources: str
+    scheduled_completion_date: str
+    security_checks: str
+    severity: str
+    source: str
+    source_identifying_vulnerability: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    system_type: str
+    vulnerability_description: str
+
+# ------------------------------------------------------------
+# Source: Systempoamdashboard_Meta
+class Systempoamdashboard_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Systempoamdashboard_Pagination
+class Systempoamdashboard_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Testresults
+class Testresults(BaseModel):
+    data: List[Testresults_DataItem]
+    meta: Testresults_Meta
+    pagination: Testresults_Pagination
+
+# ------------------------------------------------------------
+# Source: Testresults_DataItem
+class Testresults_DataItem(BaseModel):
+    assessmentprocedure: str
+    cci: str
+    compliancestatus: str
+    control: str
+    description: str
+    isinherited: bool
+    systemid: int
+    testdate: float
+    testedby: str
+    type: str
+
+# ------------------------------------------------------------
+# Source: Testresults_Meta
+class Testresults_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Testresults_Pagination
+class Testresults_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Userdetails
+class Userdetails(BaseModel):
+    data: List[Userdetails_DataItem]
+    meta: Userdetails_Meta
+    pagination: Userdetails_Pagination
+
+# ------------------------------------------------------------
+# Source: Userdetails_DataItem
+class Userdetails_DataItem(BaseModel):
+    email: str
+    first_name: str
+    home_organization: str
+    last_name: str
+    organization: str
+    organization_hierarchy: str
+    phone: str
+    role: str
+    status: str
+    system_acronym: str
+    system_id: str
+    system_name: str
+    system_policy: str
+    user_id: str
+
+# ------------------------------------------------------------
+# Source: Userdetails_Meta
+class Userdetails_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Userdetails_Pagination
+class Userdetails_Pagination(BaseModel):
+    nextpageurl: str
+    pageindex: int
+    pagesize: int
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Workflowdashboard
+class Workflowdashboard(BaseModel):
+    data: List[Workflowdashboard_DataItem]
+    meta: Workflowdashboard_Meta
+    pagination: Workflowdashboard_Pagination
+
+# ------------------------------------------------------------
+# Source: Workflowdashboard_DataItem
+class Workflowdashboard_DataItem(BaseModel):
+    createddate: float
+    currentstage: str
+    lasteditedby: str
+    lastediteddate: float
+    packagename: str
+    systemid: int
+    systemname: str
+    transitions: str
+    version: int
+    workflow: str
+    workflowinstanceid: int
+    workflowuid: str
+
+# ------------------------------------------------------------
+# Source: Workflowdashboard_Meta
+class Workflowdashboard_Meta(BaseModel):
+    code: int
+
+# ------------------------------------------------------------
+# Source: Workflowdashboard_Pagination
+class Workflowdashboard_Pagination(BaseModel):
+    nextpageurl: str
+    prevpageurl: str
+    totalcount: int
+    totalpages: int
+
+# ------------------------------------------------------------
+# Source: Workflows
+class Workflows(BaseModel):
+    data: Optional[Any]
+    meta: Workflows_Meta
+
+# ------------------------------------------------------------
+# Source: Workflows_Meta
+class Workflows_Meta(BaseModel):
+    code: int

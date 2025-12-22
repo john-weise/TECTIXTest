@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atoaas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atoaas
+  template:
+    metadata:
+      labels:
+        app: atoaas
+    spec:
+      containers:
+      - name: atoaas
+        image: atoaas:latest  
+        volumeMounts:
+        - name: emasscert-volume
+          mountPath: /etc/ssl/certs/mycertificate
+          readOnly: true
+        ports:
+        - containerPort: 5000
+      volumes:
+      - name: emasscert-volume
+        secret:
+          secretName: emasscert
