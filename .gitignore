@@ -1,0 +1,25 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+.env/
+
+# IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test outputs
+test_results_*.html
+test_results_*.json
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
