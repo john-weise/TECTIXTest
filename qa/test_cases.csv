@@ -1,0 +1,210 @@
+Test ID,Category,Sub-Category,Priority,Test Name,Preconditions,Test Steps,Test Data,Expected Result,Actual Result,Status,Automatable,Tester,Date,Notes
+AUTH-001,Authentication,Login,P0,Login with valid credentials (no 2FA),App running; user without 2FA exists,"1. POST /api/login
+2. Send JSON body
+3. Check response","{ ""username"": ""testadmin"", ""password"": ""TestPass123!"" }","HTTP 200; JSON: { success: true, user: 'testadmin', two_factor_required: false }; session cookie set",,TODO,Yes,,,"Timing normalized by _auth_sleep"
+AUTH-002,Authentication,Login,P0,Login with wrong password,App running; valid user exists,"1. POST /api/login
+2. Send invalid password","{ ""username"": ""testadmin"", ""password"": ""WrongPass"" }","HTTP 401; JSON: { success: false, error: 'Invalid credentials' }",,TODO,Yes,,,Generic error - must not reveal if user exists
+AUTH-003,Authentication,Login,P0,Login with non-existent username,App running,"1. POST /api/login
+2. Use unknown username","{ ""username"": ""nobody"", ""password"": ""anything"" }","HTTP 401; JSON: { success: false, error: 'Invalid credentials' } - same response as wrong password (no enumeration)",,TODO,Yes,,,Critical: error must NOT say 'user not found'
+AUTH-004,Authentication,Login,P0,Login triggers 2FA challenge,App running; user WITH 2FA enrolled,"1. POST /api/login
+2. Use valid credentials for 2FA user","{ ""username"": ""2fauser"", ""password"": ""TestPass123!"" }","HTTP 200; JSON: { success: false, two_factor_required: true, user: null }; pending session set (NOT full session)",,TODO,Yes,,,Session must only have pending_user not user
+AUTH-005,Authentication,Login,P1,Login with invalid JSON format,App running,"1. POST /api/login
+2. Send malformed payload","{ ""username"": """" } (missing password)","HTTP 400; JSON: { success: false, error: 'Invalid username/password format' }",,TODO,Yes,,,Pydantic validation
+AUTH-006,Authentication,Login,P1,Rate limit blocks excess login attempts,App running,"1. POST /api/login 11+ times in quick succession
+2. Use any credentials","{ ""username"": ""any"", ""password"": ""any"" } x11+","HTTP 429 on 11th+ attempt; JSON: { success: false, error: 'Too many login attempts...' }",,TODO,Yes,,,_RATE_LIMIT threshold; check IP-based not user-based
+AUTH-007,Authentication,Login,P1,Login with empty body,App running,"1. POST /api/login
+2. Send empty JSON {}",{},"HTTP 400; validation error response",,TODO,Yes,,,
+AUTH-008,Authentication,Login,P2,Login response does not reveal timing difference,App running,"1. POST /api/login with valid user/wrong pass - record time
+2. POST /api/login with invalid user/any pass - record time
+3. Compare response times","Valid user + wrong pass; Invalid user + any pass","Response times should be roughly equal (within ~50ms) - _auth_sleep normalizes timing",,TODO,No,,,Manual timing test; prevents username enumeration
+AUTH-009,Authentication,Session,P0,Session check returns authenticated state,User logged in,"1. POST /api/login to authenticate
+2. GET /api/session","Valid credentials","HTTP 200; JSON: { authenticated: true, user: 'testadmin', is_admin: true/false }",,TODO,Yes,,,
+AUTH-010,Authentication,Session,P0,Session check returns unauthenticated when not logged in,No session,"1. GET /api/session (no login first)","None","HTTP 200; JSON: { authenticated: false }",,TODO,Yes,,,Returns 200 not 401
+AUTH-011,Authentication,Session,P1,Session check returns show_welcome flag for new admin,First login as default admin,"1. Login as default admin
+2. GET /api/session","Default admin credentials","JSON includes: { show_welcome: true, is_default_admin: true, needs_password_reset: true }",,TODO,Yes,,,
+AUTH-012,Authentication,Session,P1,Stale session (wrong server_run_id) is cleared,Old session cookie from previous server run,"1. Inject session with old server_run_id
+2. GET /api/session","Session cookie with mismatched server_run_id","HTTP 200; JSON: { authenticated: false }; old session cleared",,TODO,No,,,Manual test with custom session
+AUTH-013,Authentication,Logout,P0,Logout clears session,User logged in,"1. POST /api/login
+2. Confirm GET /api/session returns authenticated: true
+3. POST /api/logout
+4. GET /api/session","Valid credentials","POST /api/logout returns HTTP 200; subsequent GET /api/session returns authenticated: false",,TODO,Yes,,,
+AUTH-014,Authentication,Logout,P1,Logout on unauthenticated session does not error,No session,"1. POST /api/logout without logging in","None","HTTP 200 or 401 - no server error (no 500)",,TODO,Yes,,,
+2FA-001,Two-Factor Auth,Status,P0,2FA status returns not enrolled for new user,User logged in; 2FA not set up,"1. POST /api/login (no-2FA user)
+2. GET /api/account/2fa/status","Valid credentials","HTTP 200; JSON: { enrolled: false }",,TODO,Yes,,,
+2FA-002,Two-Factor Auth,Enrollment,P0,Start 2FA enrollment returns QR code and secret,User logged in; 2FA not enrolled,"1. POST /api/login
+2. POST /api/account/2fa/start","Valid credentials","HTTP 200; JSON includes: { qr_code: '<data URI>', secret: '<base32 string>' }",,TODO,Yes,,,
+2FA-003,Two-Factor Auth,Enrollment,P0,Confirm 2FA with valid TOTP code,User in enrollment flow (secret from /start),"1. POST /api/account/2fa/start
+2. Generate TOTP from returned secret
+3. POST /api/account/2fa/confirm with code","{ ""code"": ""<valid TOTP>"" }","HTTP 200; 2FA enrolled; JSON includes recovery_codes array",,TODO,No,,,Requires pyotp to generate code
+2FA-004,Two-Factor Auth,Enrollment,P1,Confirm 2FA with invalid TOTP code,User in enrollment flow,"1. POST /api/account/2fa/start
+2. POST /api/account/2fa/confirm with wrong code","{ ""code"": ""000000"" }","HTTP 400 or 401; enrollment not completed",,TODO,Yes,,,
+2FA-005,Two-Factor Auth,Login,P0,Complete 2FA login with valid TOTP,User with 2FA enrolled; pending session active,"1. POST /api/login → two_factor_required: true
+2. Generate TOTP from enrolled secret
+3. POST /api/login/2fa with valid code","{ ""code"": ""<valid TOTP>"" }","HTTP 200; full session established; JSON: { success: true, user: '...' }",,TODO,No,,,
+2FA-006,Two-Factor Auth,Login,P0,2FA login with invalid code is rejected,Pending 2FA session active,"1. POST /api/login with 2FA user
+2. POST /api/login/2fa with wrong code","{ ""code"": ""123456"" }","HTTP 401; session remains pending (not fully authenticated)",,TODO,Yes,,,
+2FA-007,Two-Factor Auth,Login,P1,2FA login with expired pending session,More than timeout since /api/login,"1. POST /api/login (2FA user)
+2. Wait for pending session timeout
+3. POST /api/login/2fa","{ ""code"": ""<valid TOTP>"" }","HTTP 401; pending session expired error",,TODO,No,,,Manual timing test; check pending_2fa_created_at expiry
+2FA-008,Two-Factor Auth,Disable,P1,Disable 2FA with valid current password,User with 2FA enrolled and logged in,"1. POST /api/account/2fa/disable
+2. Provide current password","{ ""password"": ""TestPass123!"" }","HTTP 200; 2FA disabled; subsequent GET /api/account/2fa/status returns enrolled: false",,TODO,Yes,,,
+2FA-009,Two-Factor Auth,Disable,P1,Disable 2FA with wrong password is rejected,User with 2FA enrolled and logged in,"1. POST /api/account/2fa/disable with wrong password","{ ""password"": ""WrongPass"" }","HTTP 400 or 401; 2FA remains enabled",,TODO,Yes,,,
+2FA-010,Two-Factor Auth,Recovery,P1,Regenerate recovery codes,User with 2FA enrolled and logged in,"1. POST /api/account/2fa/recovery/regenerate","None","HTTP 200; new recovery_codes array returned; old codes invalidated",,TODO,Yes,,,
+2FA-011,Two-Factor Auth,Admin,P1,Admin can disable user's 2FA,Admin logged in; target user has 2FA,"1. POST /api/admin/users/<username>/2fa/disable","None (or admin confirmation)","HTTP 200; target user's 2FA disabled; user's 2FA status becomes enrolled: false",,TODO,Yes,,,
+2FA-012,Two-Factor Auth,Admin,P1,Non-admin cannot disable another user's 2FA,Regular user logged in,"1. POST /api/admin/users/<username>/2fa/disable","None","HTTP 403; 2FA unchanged",,TODO,Yes,,,
+SCAN-001,Scan Processing,Submit,P0,Submit valid system scan (form-data with numeric ID and CSV),User authenticated; valid CSV ready,"1. POST /process (multipart/form-data)
+2. Include system_id (numeric) and CSV file","system_id=12345; data_file=test.csv","HTTP 202; JSON: { success: true, job_id: '<token>' }; background worker started",,TODO,Yes,,,Note: form-data NOT JSON; system_id must be numeric
+SCAN-002,Scan Processing,Submit,P0,Submit scan with non-numeric system ID is rejected,User authenticated,"1. POST /process
+2. Use non-numeric system_id","system_id='ABC123'; data_file=test.csv","HTTP 400; JSON: { error: 'System ID must be numeric.' }",,TODO,Yes,,,
+SCAN-003,Scan Processing,Submit,P0,Submit scan without CSV file is rejected,User authenticated,"1. POST /process
+2. Omit data_file field","system_id=12345 (no file)","HTTP 400; JSON: { error: 'data file upload is required.' }",,TODO,Yes,,,
+SCAN-004,Scan Processing,Submit,P0,Submit scan with non-CSV file is rejected,User authenticated,"1. POST /process
+2. Upload non-CSV file","system_id=12345; data_file=test.xlsx","HTTP 400; JSON: { error: 'Only CSV files are supported.' }",,TODO,Yes,,,
+SCAN-005,Scan Processing,Submit,P0,Unauthenticated scan request is rejected,No session,"1. POST /process (no login)","system_id=12345; data_file=test.csv","HTTP 401 or redirect to login",,TODO,Yes,,,
+SCAN-006,Scan Processing,Status,P0,Job status returns processing state,Scan submitted; job not yet complete,"1. POST /process → get job_id
+2. GET /status/<job_id> quickly after","job_id from SCAN-001","HTTP 200; JSON includes status field (processing/complete)",,TODO,Yes,,,
+SCAN-007,Scan Processing,Status,P0,Job status returns completed state,Scan submitted and completed,"1. POST /process → get job_id
+2. Poll GET /status/<job_id> until complete","job_id from SCAN-001","HTTP 200; JSON: { status: 'completed', ... }",,TODO,Yes,,,
+SCAN-008,Scan Processing,Status,P1,Job status for unknown job_id,Valid session; random job_id,"1. GET /status/nonexistent-job-id","job_id='fakeid123'","HTTP 404 or JSON with not_found status",,TODO,Yes,,,
+SCAN-009,Scan Processing,Status,P1,User cannot access another user's job,Two users; one has a job,"1. Login as user A; submit scan; get job_id
+2. Login as user B
+3. GET /status/<user_A_job_id>","job_id belonging to user A","HTTP 404 or 403; user B cannot see user A's job",,TODO,Yes,,,Job isolation by owner
+SCAN-010,Scan Processing,Streaming,P1,SSE stream delivers output lines,Scan in progress,"1. POST /process → get job_id
+2. GET /stream_output/<job_id>
+3. Listen for SSE events","job_id from active scan","HTTP 200; Content-Type: text/event-stream; data lines appear progressively",,TODO,No,,,Manual test with browser EventSource or curl --no-buffer
+SCAN-011,Scan Processing,Results,P0,Retrieve JSON results for completed scan,Scan completed,"1. POST /process; wait for completion
+2. GET /reporting_json/<job_id>","job_id from completed scan","HTTP 200; JSON with test_results array; each result has test number, result (PASS/FAIL/CONCERN/NA), message",,TODO,Yes,,,
+SCAN-012,Scan Processing,Results,P0,Download Excel checklist for completed scan,Scan completed,"1. GET /download?job_id=<job_id>","job_id from completed scan","HTTP 200; Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; file download",,TODO,Yes,,,
+SCAN-013,Scan Processing,Results,P1,Download before scan complete returns appropriate error,Scan in progress,"1. POST /process → get job_id
+2. Immediately GET /download?job_id=<job_id>","job_id from new scan","HTTP 404 or 400; not a server error",,TODO,Yes,,,
+ACCT-001,Account,Password,P0,Change password with correct current password,User authenticated,"1. POST /api/account/password
+2. Provide current and new password","{ ""current_password"": ""TestPass123!"", ""new_password"": ""NewPass456!"" }","HTTP 200; JSON: { success: true }; can now login with new password",,TODO,Yes,,,
+ACCT-002,Account,Password,P0,Change password with wrong current password,User authenticated,"1. POST /api/account/password
+2. Provide wrong current password","{ ""current_password"": ""WrongPass"", ""new_password"": ""NewPass456!"" }","HTTP 400; JSON: { success: false, error: 'password change failed' }; password unchanged",,TODO,Yes,,,
+ACCT-003,Account,Password,P0,Change password too short (less than 8 chars),User authenticated,"1. POST /api/account/password
+2. Provide new password under 8 chars","{ ""current_password"": ""TestPass123!"", ""new_password"": ""short"" }","HTTP 400; JSON: { success: false, error: 'password too short' }",,TODO,Yes,,,Minimum 8 chars enforced
+ACCT-004,Account,Password,P1,Change password with missing fields,User authenticated,"1. POST /api/account/password
+2. Omit current_password or new_password","{ ""new_password"": ""NewPass456!"" } (no current_password)","HTTP 400; JSON: { success: false, error: 'current_password and new_password required' }",,TODO,Yes,,,
+ACCT-005,Account,Password,P1,User cannot change another user's password via this endpoint,User A authenticated,"1. POST /api/account/password
+2. Include username field pointing to another user","{ ""username"": ""otheruser"", ""current_password"": ""..."", ""new_password"": ""..."" }","HTTP 403; JSON: { success: false, error: 'forbidden' }; logs security warning",,TODO,Yes,,,username field checked against session user
+ACCT-006,Account,Password,P1,Unauthenticated password change is rejected,No session,"1. POST /api/account/password (no login)","Any body","HTTP 401",,TODO,Yes,,,
+ADMIN-001,Admin Panel,User Management,P0,Admin can list all users,Admin authenticated,"1. GET /api/admin/users","None","HTTP 200; JSON array with user objects; includes testadmin and testuser",,TODO,Yes,,,
+ADMIN-002,Admin Panel,User Management,P0,Non-admin cannot list users,Regular user authenticated,"1. GET /api/admin/users","None","HTTP 403",,TODO,Yes,,,
+ADMIN-003,Admin Panel,User Management,P0,Admin creates new user,Admin authenticated,"1. POST /api/admin/users
+2. Provide username + password + role","{ ""username"": ""newuser"", ""password"": ""Pass123!"", ""role"": ""user"" }","HTTP 200 or 201; user created; visible in GET /api/admin/users",,TODO,Yes,,,
+ADMIN-004,Admin Panel,User Management,P1,Create user with duplicate username fails,Admin authenticated; user already exists,"1. POST /api/admin/users
+2. Use existing username","{ ""username"": ""testadmin"", ""password"": ""Pass123!"", ""role"": ""user"" }","HTTP 409 or 400; error response; no duplicate created",,TODO,Yes,,,
+ADMIN-005,Admin Panel,User Management,P1,Create user with missing required fields fails,Admin authenticated,"1. POST /api/admin/users
+2. Omit password","{ ""username"": ""incomplete"" }","HTTP 400 or 422; user not created",,TODO,Yes,,,
+ADMIN-006,Admin Panel,User Management,P0,Admin deletes a user,Admin authenticated; target user exists,"1. DELETE /api/admin/users/<username>","username=tobedeleted","HTTP 200; user no longer in GET /api/admin/users; deleted user cannot login",,TODO,Yes,,,
+ADMIN-007,Admin Panel,User Management,P1,Delete non-existent user returns 404,Admin authenticated,"1. DELETE /api/admin/users/doesnotexist","username=doesnotexist","HTTP 404",,TODO,Yes,,,
+ADMIN-008,Admin Panel,User Management,P1,Admin cannot delete themselves,Admin authenticated,"1. DELETE /api/admin/users/<own_username>","Own admin username","HTTP 400 or 403; admin account preserved",,TODO,Yes,,,Self-delete protection
+ADMIN-009,Admin Panel,Systems,P0,Admin can list portfolio systems,Admin authenticated,"1. GET /api/admin/systems","None","HTTP 200; JSON array of systems (may be empty)",,TODO,Yes,,,
+ADMIN-010,Admin Panel,Systems,P0,Admin adds system to portfolio,Admin authenticated,"1. POST /api/admin/systems
+2. Provide system_id (integer) and optional name","{ ""system_id"": 12345, ""system_name"": ""Test System"" }","HTTP 200 or 201; system appears in GET /api/admin/systems",,TODO,Yes,,,
+ADMIN-011,Admin Panel,Systems,P1,Add system with duplicate system_id,Admin authenticated; system already exists,"1. POST /api/admin/systems with existing system_id","{ ""system_id"": 12345 }","HTTP 409 or 400; duplicate rejected",,TODO,Yes,,,
+ADMIN-012,Admin Panel,Systems,P0,Admin uploads CSV for a system,Admin authenticated; system exists in portfolio,"1. POST /api/admin/systems/<system_id>/csv
+2. Upload CSV file (multipart)","system_id=<id>; CSV file","HTTP 200; CSV path stored; visible in system record",,TODO,Yes,,,
+ADMIN-013,Admin Panel,Systems,P1,Admin updates (unsets) CSV path for a system,Admin authenticated; system with CSV,"1. PATCH /api/admin/systems/<system_id>/csv","system_id=<id>","HTTP 200; CSV path cleared/updated",,TODO,Yes,,,
+ADMIN-014,Admin Panel,Systems,P0,Admin deletes system from portfolio,Admin authenticated; system exists,"1. DELETE /api/admin/systems/<system_id>","system_id=<id>","HTTP 200; system no longer in GET /api/admin/systems",,TODO,Yes,,,
+ADMIN-015,Admin Panel,Systems,P1,Delete non-existent system returns 404,Admin authenticated,"1. DELETE /api/admin/systems/99999","system_id=99999","HTTP 404",,TODO,Yes,,,
+ADMIN-016,Admin Panel,Systems,P1,Non-admin cannot manage systems,Regular user authenticated,"1. GET /api/admin/systems","None","HTTP 403",,TODO,Yes,,,
+ADMIN-017,Admin Panel,Logs,P1,Admin can retrieve log info,Admin authenticated,"1. GET /api/admin/logs/info","None","HTTP 200; JSON with log file info (size, path, etc.)",,TODO,Yes,,,
+ADMIN-018,Admin Panel,Logs,P1,Admin can tail log file,Admin authenticated,"1. GET /api/admin/logs/tail","Optional: ?lines=50","HTTP 200; JSON with array of recent log lines",,TODO,Yes,,,
+ADMIN-019,Admin Panel,Logs,P1,Admin can search logs,Admin authenticated,"1. POST /api/admin/logs/search
+2. Provide search query","{ ""query"": ""LOGIN"" }","HTTP 200; JSON with matching log lines",,TODO,Yes,,,
+ADMIN-020,Admin Panel,Logs,P2,Admin can download log file,Admin authenticated,"1. GET /api/admin/logs/download","None","HTTP 200; file download response; Content-Disposition header set",,TODO,Yes,,,
+ADMIN-021,Admin Panel,Logs,P1,Non-admin cannot access logs,Regular user authenticated,"1. GET /api/admin/logs/info","None","HTTP 403",,TODO,Yes,,,
+POL-001,Scan Policies,CRUD,P0,Admin lists all scan policies,Admin authenticated,"1. GET /api/policies","None","HTTP 200; JSON array of policies (may be empty)",,TODO,Yes,,,
+POL-002,Scan Policies,CRUD,P0,Admin creates daily scan policy,Admin authenticated,"1. POST /api/policies
+2. Set frequency=DAILY","{ ""name"": ""Daily Scan"", ""frequency"": ""DAILY"", ""time_of_day"": ""02:00"", ""enabled"": true }","HTTP 200 or 201; policy created with id; visible in GET /api/policies",,TODO,Yes,,,
+POL-003,Scan Policies,CRUD,P0,Admin creates weekly scan policy,Admin authenticated,"1. POST /api/policies
+2. Set frequency=WEEKLY with day_of_week","{ ""name"": ""Weekly Scan"", ""frequency"": ""WEEKLY"", ""day_of_week"": ""Monday"" }","HTTP 200 or 201; policy created",,TODO,Yes,,,
+POL-004,Scan Policies,CRUD,P1,Create policy with invalid frequency,Admin authenticated,"1. POST /api/policies
+2. Use unsupported frequency value","{ ""name"": ""Bad"", ""frequency"": ""HOURLY"" }","HTTP 400 or 422; valid frequencies: DAILY/WEEKLY/BIWEEKLY/MONTHLY only",,TODO,Yes,,,
+POL-005,Scan Policies,CRUD,P1,Admin updates existing scan policy,Admin authenticated; policy exists,"1. PUT /api/policies/<policy_id>
+2. Change name and enabled state","{ ""name"": ""Updated Name"", ""enabled"": false }","HTTP 200; policy updated in GET /api/policies",,TODO,Yes,,,
+POL-006,Scan Policies,CRUD,P0,Admin deletes scan policy,Admin authenticated; policy exists,"1. DELETE /api/policies/<policy_id>","policy_id=<id>","HTTP 200; policy no longer in GET /api/policies",,TODO,Yes,,,
+POL-007,Scan Policies,Enrollment,P0,Enroll systems in scan policy,Admin authenticated; policy and systems exist,"1. POST /api/policies/<policy_id>/systems
+2. Provide array of system IDs","{ ""system_ids"": [1, 2, 3] }","HTTP 200 or 201; systems enrolled; visible in policy details",,TODO,Yes,,,
+POL-008,Scan Policies,Enrollment,P1,Remove systems from scan policy,Admin authenticated; systems enrolled in policy,"1. DELETE /api/policies/<policy_id>/systems
+2. Provide array of system IDs to remove","{ ""system_ids"": [1] }","HTTP 200; systems no longer enrolled in policy",,TODO,Yes,,,
+POL-009,Scan Policies,Execution,P1,Manually trigger policy run,Admin authenticated; policy with enrolled systems,"1. POST /api/policies/<policy_id>/run","policy_id=<id>","HTTP 200 or 202; scan triggered for enrolled systems",,TODO,Yes,,,
+POL-010,Scan Policies,Access,P1,Non-admin cannot manage policies,Regular user authenticated,"1. GET /api/policies","None","HTTP 403",,TODO,Yes,,,
+MON-001,Continuous Monitoring,Dashboard,P0,Retrieve monitored systems status,Admin authenticated; systems enrolled in policies,"1. GET /api/monitoring/continuous","None","HTTP 200; JSON with array of monitored systems; each has system_id, readiness_score, pass/fail/concern counts",,TODO,Yes,,,
+MON-002,Continuous Monitoring,Dashboard,P1,Monitoring returns empty array when no systems enrolled,Admin authenticated; no systems in portfolio,"1. GET /api/monitoring/continuous","None","HTTP 200; JSON: [] or { systems: [] }",,TODO,Yes,,,
+MON-003,Continuous Monitoring,Dashboard,P1,Non-admin cannot view monitoring dashboard,Regular user authenticated,"1. GET /api/monitoring/continuous","None","HTTP 403",,TODO,Yes,,,
+MON-004,Continuous Monitoring,Scores,P2,Readiness score reflects test results accurately,System with completed scan,"1. Complete a scan for a system
+2. GET /api/monitoring/continuous
+3. Check readiness_score","System with known pass/fail ratio","Readiness score = (PASS count / total tests) * 100; validates against known scan data",,TODO,No,,,Manual verification against known test results
+EMASS-001,eMASS Integration,Connection,P1,Test eMASS connectivity with valid credentials,Admin authenticated; eMASS config set,"1. POST /api/admin/test_emass (GET also supported)","Valid eMASS creds in config","HTTP 200; JSON shows connection result",,TODO,No,,,Requires live or mocked eMASS endpoint
+EMASS-002,eMASS Integration,Connection,P1,Test eMASS connectivity with invalid credentials,Admin authenticated; wrong eMASS creds,"1. POST /api/admin/test_emass","Invalid eMASS creds","HTTP 200 with error or HTTP 4xx; connection failure reported (not 500)",,TODO,No,,,
+EMASS-003,eMASS Integration,Sync,P2,Sync data from eMASS,Admin authenticated; valid eMASS connection,"1. POST /api/admin/update_emass","Valid eMASS configuration","HTTP 200; systems synced from eMASS",,TODO,No,,,
+EMASS-004,eMASS Integration,Access,P1,Non-admin cannot manage eMASS connection,Regular user authenticated,"1. POST /api/admin/test_emass","Any","HTTP 403",,TODO,Yes,,,
+SEC-001,Security,Authentication,P0,Protected endpoints require authentication,No session,"1. Access each protected endpoint without login
+2. Test endpoints: /process, /api/admin/users, /api/policies, /api/account/password","No session","All protected endpoints return HTTP 401 or redirect; not accessible without valid session",,TODO,Yes,,,Automated: loop through all endpoints
+SEC-002,Security,Authorization,P0,Admin endpoints reject regular users,Regular user authenticated,"1. Login as regular user
+2. Attempt admin-only endpoints: GET /api/admin/users, /api/admin/systems, /api/policies","Regular user session","All admin endpoints return HTTP 403",,TODO,Yes,,,
+SEC-003,Security,Injection,P1,System ID field rejects SQL injection,User authenticated,"1. POST /process with SQL injection in system_id field","system_id="" OR 1=1 --","HTTP 400; isdigit() check blocks non-numeric; no SQL executed",,TODO,Yes,,,system_id validates with .isdigit() before use
+SEC-004,Security,Upload,P1,File upload rejects non-CSV files,User authenticated,"1. POST /process with .exe, .php, .js, .xlsx files","data_file=malicious.exe (or .php, etc.)","HTTP 400; error: 'Only CSV files are supported.'",,TODO,Yes,,,filename extension check enforced
+SEC-005,Security,Passwords,P1,Passwords are hashed in database,Direct DB access for verification,"1. Create user
+2. Inspect database users table
+3. Check password_hash field","Username/password pair","password_hash field is NOT the plaintext password; length > 40 chars; bcrypt/scrypt format",,TODO,No,,,DB inspection needed; manual test
+SEC-006,Security,Session,P1,Session cookie has secure attributes,HTTPS environment,"1. Login and capture Set-Cookie header
+2. Inspect cookie flags","Login request over HTTPS","Cookie has HttpOnly flag; SameSite attribute set; Secure flag if HTTPS",,TODO,No,,,Manual inspection with browser devtools
+SEC-007,Security,Rate Limiting,P1,Rate limiting is IP-based not user-based,Different usernames same IP,"1. Send 11+ login attempts from same IP using different usernames
+2. Confirm 429 after limit exceeded","Multiple usernames from same IP","HTTP 429 triggered based on IP regardless of username used",,TODO,Yes,,,Rate limit tracks per IP
+SEC-008,Security,Timing,P2,Login response times are consistent,App running,"1. Login with valid user + wrong password (time it)
+2. Login with invalid user + any password (time it)
+3. Compare timings (run 5x each)","Mix of valid/invalid users","Response times within ~50ms of each other; _auth_sleep normalizes timing",,TODO,No,,,Manual test with curl timing
+PERF-001,Performance,Scan,P2,Single system scan completes in reasonable time,System with CSV ready,"1. POST /process with valid system + CSV
+2. Poll status until completed
+3. Record elapsed time","system_id=12345; typical CSV file","Scan completes within 120 seconds for a typical CSV",,TODO,No,,,Baseline depends on CSV size and # of tests
+PERF-002,Performance,API,P2,API endpoints respond within acceptable time,App running under normal load,"1. Run GET /api/session 50 times
+2. Record min/max/avg response time","Authenticated session","Average response time < 200ms; no timeouts",,TODO,No,,,Use locust or wrk for load testing
+PERF-003,Performance,Concurrent,P3,Multiple concurrent scans do not cause errors,Multiple users authenticated,"1. Submit 3 simultaneous scans (one per user)
+2. Monitor for errors or data cross-contamination","3 different system CSVs","All 3 scans complete successfully; each user sees only their own results; no job cross-contamination",,TODO,No,,,
+UI-001,Frontend,Login Page,P0,Login form renders correctly,App running,"1. Open app URL in browser
+2. Observe login page","Chrome/Firefox","Username and password fields visible; Login button present; no JS console errors",,TODO,No,,,Manual
+UI-002,Frontend,Login Page,P0,Successful login redirects to dashboard,App running; valid credentials,"1. Enter valid username/password
+2. Click Login","testadmin / TestPass123!","Redirected to dashboard; TopNav shows username; no error messages",,TODO,No,,,Manual
+UI-003,Frontend,Dashboard,P0,Dashboard loads and shows scan interface,User authenticated,"1. Login and navigate to dashboard","Valid session","System ID input visible; File upload button present; no broken UI elements",,TODO,No,,,Manual
+UI-004,Frontend,Dashboard,P0,Upload CSV and submit scan shows spinner,User authenticated; CSV file ready,"1. Enter numeric system ID
+2. Upload CSV file
+3. Click submit/process","system_id=12345; test.csv","Processing spinner / loading indicator appears; status updates stream in",,TODO,No,,,Manual
+UI-005,Frontend,Dashboard,P0,Scan results display in test table,Scan completed,"1. Complete a scan
+2. Observe results panel","Completed job","TestTable component shows rows; PASS in green, FAIL in red, CONCERN in yellow, NA in grey; readiness gauge shows score",,TODO,No,,,Manual
+UI-006,Frontend,Admin Panel,P0,Admin panel accessible only to admin users,Admin user authenticated,"1. Login as admin
+2. Navigate to Admin Panel","Admin session","Admin Panel loads with sidebar: Users, Portfolio, Policies, Logs, eMASS, About",,TODO,No,,,Manual
+UI-007,Frontend,Admin Panel,P1,Regular user does not see admin panel link,Regular user authenticated,"1. Login as regular user
+2. Check TopNav","User session","No Admin Panel link/button visible in navigation",,TODO,No,,,Manual
+UI-008,Frontend,Account,P1,User can change password from Account page,User authenticated,"1. Navigate to Account page
+2. Fill in current and new password
+3. Submit","Valid password change data","Success message shown; can login with new password",,TODO,No,,,Manual
+UI-009,Frontend,2FA Enrollment,P1,2FA enrollment modal shows QR code,User without 2FA authenticated,"1. Navigate to Account page
+2. Click Enable 2FA","No existing 2FA","Modal appears with QR code and manual entry code; instructions shown",,TODO,No,,,Manual
+UI-010,Frontend,Session Expired,P1,Session expired prompt appears on timeout,User with active session,"1. Leave app idle until session expires
+2. Try to interact with app","Session timeout value","SessionExpiredPrompt component appears; user prompted to log back in",,TODO,No,,,Manual; timing dependent
+UI-011,Frontend,Classification,P2,Classification banner displays on all pages,App running,"1. Open any page of the app","None","ClassificationBanner component visible at top and/or bottom of page",,TODO,No,,,Manual
+UI-012,Frontend,Reporting,P1,Reporting page shows past scan results,User with completed scans,"1. Navigate to Reporting page
+2. Look for historical jobs","User with job history","Previous scans listed; can view JSON results; download button works",,TODO,No,,,Manual
+UI-013,Frontend,Continuous Monitoring,P1,Monitoring page shows enrolled systems,Admin with enrolled systems,"1. Login as admin
+2. Navigate to Continuous Monitoring","Systems enrolled in policies","MonitoringGauge and ComplianceTimeChart visible; system cards show readiness scores",,TODO,No,,,Manual
+INT-001,Integration,End-to-End,P0,Full scan workflow: login > upload CSV > scan > download,Fresh session,"1. Login as user
+2. Upload CSV via Dashboard
+3. Submit scan with numeric system ID
+4. Wait for completion
+5. Download Excel checklist","testadmin; system_id=12345; valid CSV","All steps succeed; downloaded file is valid Excel; contains test results",,TODO,No,,,Manual E2E; smoke test for releases
+INT-002,Integration,End-to-End,P0,Admin workflow: create user > login as new user > scan > view results,Fresh admin session,"1. Admin creates new user
+2. Logout
+3. Login as new user
+4. Submit scan
+5. View results","New user credentials; valid CSV","New user can login and complete a scan; admin can see no cross-data contamination",,TODO,No,,,Manual E2E
+INT-003,Integration,End-to-End,P1,Policy automation: create policy > add system > trigger run > check monitoring,Admin session,"1. Create scan policy (DAILY)
+2. Add system to portfolio
+3. Enroll system in policy
+4. Trigger policy run manually (POST /api/policies/<id>/run)
+5. Check GET /api/monitoring/continuous","Valid system and CSV","Policy runs; monitoring page reflects updated scan results",,TODO,No,,,Manual E2E
+INT-004,Integration,End-to-End,P2,Recovery from failed scan (bad CSV),User authenticated,"1. Upload CSV with corrupted/empty content
+2. Submit scan
+3. Check status","Empty or malformed CSV","System handles gracefully; no 500 error; meaningful error message returned",,TODO,Yes,,,
