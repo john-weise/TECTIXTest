@@ -1,0 +1,1554 @@
+Summary,Issue Type,Priority,Labels,Description,Environment,Comment
+[AUTH-001] Login with valid credentials (no 2FA),Task,Highest,tectix-qa category-authentication type-login automatable priority-p0,"Test ID: AUTH-001
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login
+2. Send JSON body
+3. Check response
+
+TEST DATA:
+{ ""username"": ""testadmin"", ""password"": ""TestPass123!"" }
+
+EXPECTED RESULT:
+HTTP 200; JSON: { success: true, user: 'testadmin', two_factor_required: false }; session cookie set
+
+Automatable: Yes",App running; user without 2FA exists,Timing normalized by _auth_sleep
+[AUTH-002] Login with wrong password,Task,Highest,tectix-qa category-authentication type-login automatable priority-p0,"Test ID: AUTH-002
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login
+2. Send invalid password
+
+TEST DATA:
+{ ""username"": ""testadmin"", ""password"": ""WrongPass"" }
+
+EXPECTED RESULT:
+HTTP 401; JSON: { success: false, error: 'Invalid credentials' }
+
+Automatable: Yes",App running; valid user exists,Generic error - must not reveal if user exists
+[AUTH-003] Login with non-existent username,Task,Highest,tectix-qa category-authentication type-login automatable priority-p0,"Test ID: AUTH-003
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login
+2. Use unknown username
+
+TEST DATA:
+{ ""username"": ""nobody"", ""password"": ""anything"" }
+
+EXPECTED RESULT:
+HTTP 401; JSON: { success: false, error: 'Invalid credentials' } - same response as wrong password (no enumeration)
+
+Automatable: Yes",App running,Critical: error must NOT say 'user not found'
+[AUTH-004] Login triggers 2FA challenge,Task,Highest,tectix-qa category-authentication type-login automatable priority-p0,"Test ID: AUTH-004
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login
+2. Use valid credentials for 2FA user
+
+TEST DATA:
+{ ""username"": ""2fauser"", ""password"": ""TestPass123!"" }
+
+EXPECTED RESULT:
+HTTP 200; JSON: { success: false, two_factor_required: true, user: null }; pending session set (NOT full session)
+
+Automatable: Yes",App running; user WITH 2FA enrolled,Session must only have pending_user not user
+[AUTH-005] Login with invalid JSON format,Task,High,tectix-qa category-authentication type-login automatable priority-p1,"Test ID: AUTH-005
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login
+2. Send malformed payload
+
+TEST DATA:
+{ ""username"": """" } (missing password)
+
+EXPECTED RESULT:
+HTTP 400; JSON: { success: false, error: 'Invalid username/password format' }
+
+Automatable: Yes",App running,Pydantic validation
+[AUTH-006] Rate limit blocks excess login attempts,Task,High,tectix-qa category-authentication type-login automatable priority-p1,"Test ID: AUTH-006
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login 11+ times in quick succession
+2. Use any credentials
+
+TEST DATA:
+{ ""username"": ""any"", ""password"": ""any"" } x11+
+
+EXPECTED RESULT:
+HTTP 429 on 11th+ attempt; JSON: { success: false, error: 'Too many login attempts...' }
+
+Automatable: Yes",App running,_RATE_LIMIT threshold; check IP-based not user-based
+[AUTH-007] Login with empty body,Task,High,tectix-qa category-authentication type-login automatable priority-p1,"Test ID: AUTH-007
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login
+2. Send empty JSON {}
+
+TEST DATA:
+{}
+
+EXPECTED RESULT:
+HTTP 400; validation error response
+
+Automatable: Yes",App running,
+[AUTH-008] Login response does not reveal timing difference,Task,Medium,tectix-qa category-authentication type-login manual-only priority-p2,"Test ID: AUTH-008
+Category: Authentication > Login
+
+TEST STEPS:
+1. POST /api/login with valid user/wrong pass - record time
+2. POST /api/login with invalid user/any pass - record time
+3. Compare response times
+
+TEST DATA:
+Valid user + wrong pass; Invalid user + any pass
+
+EXPECTED RESULT:
+Response times should be roughly equal (within ~50ms) - _auth_sleep normalizes timing
+
+Automatable: No",App running,Manual timing test; prevents username enumeration
+[AUTH-009] Session check returns authenticated state,Task,Highest,tectix-qa category-authentication type-session automatable priority-p0,"Test ID: AUTH-009
+Category: Authentication > Session
+
+TEST STEPS:
+1. POST /api/login to authenticate
+2. GET /api/session
+
+TEST DATA:
+Valid credentials
+
+EXPECTED RESULT:
+HTTP 200; JSON: { authenticated: true, user: 'testadmin', is_admin: true/false }
+
+Automatable: Yes",User logged in,
+[AUTH-010] Session check returns unauthenticated when not logged in,Task,Highest,tectix-qa category-authentication type-session automatable priority-p0,"Test ID: AUTH-010
+Category: Authentication > Session
+
+TEST STEPS:
+1. GET /api/session (no login first)
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON: { authenticated: false }
+
+Automatable: Yes",No session,Returns 200 not 401
+[AUTH-011] Session check returns show_welcome flag for new admin,Task,High,tectix-qa category-authentication type-session automatable priority-p1,"Test ID: AUTH-011
+Category: Authentication > Session
+
+TEST STEPS:
+1. Login as default admin
+2. GET /api/session
+
+TEST DATA:
+Default admin credentials
+
+EXPECTED RESULT:
+JSON includes: { show_welcome: true, is_default_admin: true, needs_password_reset: true }
+
+Automatable: Yes",First login as default admin,
+[AUTH-012] Stale session (wrong server_run_id) is cleared,Task,High,tectix-qa category-authentication type-session manual-only priority-p1,"Test ID: AUTH-012
+Category: Authentication > Session
+
+TEST STEPS:
+1. Inject session with old server_run_id
+2. GET /api/session
+
+TEST DATA:
+Session cookie with mismatched server_run_id
+
+EXPECTED RESULT:
+HTTP 200; JSON: { authenticated: false }; old session cleared
+
+Automatable: No",Old session cookie from previous server run,Manual test with custom session
+[AUTH-013] Logout clears session,Task,Highest,tectix-qa category-authentication type-logout automatable priority-p0,"Test ID: AUTH-013
+Category: Authentication > Logout
+
+TEST STEPS:
+1. POST /api/login
+2. Confirm GET /api/session returns authenticated: true
+3. POST /api/logout
+4. GET /api/session
+
+TEST DATA:
+Valid credentials
+
+EXPECTED RESULT:
+POST /api/logout returns HTTP 200; subsequent GET /api/session returns authenticated: false
+
+Automatable: Yes",User logged in,
+[AUTH-014] Logout on unauthenticated session does not error,Task,High,tectix-qa category-authentication type-logout automatable priority-p1,"Test ID: AUTH-014
+Category: Authentication > Logout
+
+TEST STEPS:
+1. POST /api/logout without logging in
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200 or 401 - no server error (no 500)
+
+Automatable: Yes",No session,
+[2FA-001] 2FA status returns not enrolled for new user,Task,Highest,tectix-qa category-two-factor-auth type-status automatable priority-p0,"Test ID: 2FA-001
+Category: Two-Factor Auth > Status
+
+TEST STEPS:
+1. POST /api/login (no-2FA user)
+2. GET /api/account/2fa/status
+
+TEST DATA:
+Valid credentials
+
+EXPECTED RESULT:
+HTTP 200; JSON: { enrolled: false }
+
+Automatable: Yes",User logged in; 2FA not set up,
+[2FA-002] Start 2FA enrollment returns QR code and secret,Task,Highest,tectix-qa category-two-factor-auth type-enrollment automatable priority-p0,"Test ID: 2FA-002
+Category: Two-Factor Auth > Enrollment
+
+TEST STEPS:
+1. POST /api/login
+2. POST /api/account/2fa/start
+
+TEST DATA:
+Valid credentials
+
+EXPECTED RESULT:
+HTTP 200; JSON includes: { qr_code: '<data URI>', secret: '<base32 string>' }
+
+Automatable: Yes",User logged in; 2FA not enrolled,
+[2FA-003] Confirm 2FA with valid TOTP code,Task,Highest,tectix-qa category-two-factor-auth type-enrollment manual-only priority-p0,"Test ID: 2FA-003
+Category: Two-Factor Auth > Enrollment
+
+TEST STEPS:
+1. POST /api/account/2fa/start
+2. Generate TOTP from returned secret
+3. POST /api/account/2fa/confirm with code
+
+TEST DATA:
+{ ""code"": ""<valid TOTP>"" }
+
+EXPECTED RESULT:
+HTTP 200; 2FA enrolled; JSON includes recovery_codes array
+
+Automatable: No",User in enrollment flow (secret from /start),Requires pyotp to generate code
+[2FA-004] Confirm 2FA with invalid TOTP code,Task,High,tectix-qa category-two-factor-auth type-enrollment automatable priority-p1,"Test ID: 2FA-004
+Category: Two-Factor Auth > Enrollment
+
+TEST STEPS:
+1. POST /api/account/2fa/start
+2. POST /api/account/2fa/confirm with wrong code
+
+TEST DATA:
+{ ""code"": ""000000"" }
+
+EXPECTED RESULT:
+HTTP 400 or 401; enrollment not completed
+
+Automatable: Yes",User in enrollment flow,
+[2FA-005] Complete 2FA login with valid TOTP,Task,Highest,tectix-qa category-two-factor-auth type-login manual-only priority-p0,"Test ID: 2FA-005
+Category: Two-Factor Auth > Login
+
+TEST STEPS:
+1. POST /api/login → two_factor_required: true
+2. Generate TOTP from enrolled secret
+3. POST /api/login/2fa with valid code
+
+TEST DATA:
+{ ""code"": ""<valid TOTP>"" }
+
+EXPECTED RESULT:
+HTTP 200; full session established; JSON: { success: true, user: '...' }
+
+Automatable: No",User with 2FA enrolled; pending session active,
+[2FA-006] 2FA login with invalid code is rejected,Task,Highest,tectix-qa category-two-factor-auth type-login automatable priority-p0,"Test ID: 2FA-006
+Category: Two-Factor Auth > Login
+
+TEST STEPS:
+1. POST /api/login with 2FA user
+2. POST /api/login/2fa with wrong code
+
+TEST DATA:
+{ ""code"": ""123456"" }
+
+EXPECTED RESULT:
+HTTP 401; session remains pending (not fully authenticated)
+
+Automatable: Yes",Pending 2FA session active,
+[2FA-007] 2FA login with expired pending session,Task,High,tectix-qa category-two-factor-auth type-login manual-only priority-p1,"Test ID: 2FA-007
+Category: Two-Factor Auth > Login
+
+TEST STEPS:
+1. POST /api/login (2FA user)
+2. Wait for pending session timeout
+3. POST /api/login/2fa
+
+TEST DATA:
+{ ""code"": ""<valid TOTP>"" }
+
+EXPECTED RESULT:
+HTTP 401; pending session expired error
+
+Automatable: No",More than timeout since /api/login,Manual timing test; check pending_2fa_created_at expiry
+[2FA-008] Disable 2FA with valid current password,Task,High,tectix-qa category-two-factor-auth type-disable automatable priority-p1,"Test ID: 2FA-008
+Category: Two-Factor Auth > Disable
+
+TEST STEPS:
+1. POST /api/account/2fa/disable
+2. Provide current password
+
+TEST DATA:
+{ ""password"": ""TestPass123!"" }
+
+EXPECTED RESULT:
+HTTP 200; 2FA disabled; subsequent GET /api/account/2fa/status returns enrolled: false
+
+Automatable: Yes",User with 2FA enrolled and logged in,
+[2FA-009] Disable 2FA with wrong password is rejected,Task,High,tectix-qa category-two-factor-auth type-disable automatable priority-p1,"Test ID: 2FA-009
+Category: Two-Factor Auth > Disable
+
+TEST STEPS:
+1. POST /api/account/2fa/disable with wrong password
+
+TEST DATA:
+{ ""password"": ""WrongPass"" }
+
+EXPECTED RESULT:
+HTTP 400 or 401; 2FA remains enabled
+
+Automatable: Yes",User with 2FA enrolled and logged in,
+[2FA-010] Regenerate recovery codes,Task,High,tectix-qa category-two-factor-auth type-recovery automatable priority-p1,"Test ID: 2FA-010
+Category: Two-Factor Auth > Recovery
+
+TEST STEPS:
+1. POST /api/account/2fa/recovery/regenerate
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; new recovery_codes array returned; old codes invalidated
+
+Automatable: Yes",User with 2FA enrolled and logged in,
+[2FA-011] Admin can disable user's 2FA,Task,High,tectix-qa category-two-factor-auth type-admin automatable priority-p1,"Test ID: 2FA-011
+Category: Two-Factor Auth > Admin
+
+TEST STEPS:
+1. POST /api/admin/users/<username>/2fa/disable
+
+TEST DATA:
+None (or admin confirmation)
+
+EXPECTED RESULT:
+HTTP 200; target user's 2FA disabled; user's 2FA status becomes enrolled: false
+
+Automatable: Yes",Admin logged in; target user has 2FA,
+[2FA-012] Non-admin cannot disable another user's 2FA,Task,High,tectix-qa category-two-factor-auth type-admin automatable priority-p1,"Test ID: 2FA-012
+Category: Two-Factor Auth > Admin
+
+TEST STEPS:
+1. POST /api/admin/users/<username>/2fa/disable
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 403; 2FA unchanged
+
+Automatable: Yes",Regular user logged in,
+[SCAN-001] Submit valid system scan (form-data with numeric ID and CSV),Task,Highest,tectix-qa category-scan-processing type-submit automatable priority-p0,"Test ID: SCAN-001
+Category: Scan Processing > Submit
+
+TEST STEPS:
+1. POST /process (multipart/form-data)
+2. Include system_id (numeric) and CSV file
+
+TEST DATA:
+system_id=12345; data_file=test.csv
+
+EXPECTED RESULT:
+HTTP 202; JSON: { success: true, job_id: '<token>' }; background worker started
+
+Automatable: Yes",User authenticated; valid CSV ready,Note: form-data NOT JSON; system_id must be numeric
+[SCAN-002] Submit scan with non-numeric system ID is rejected,Task,Highest,tectix-qa category-scan-processing type-submit automatable priority-p0,"Test ID: SCAN-002
+Category: Scan Processing > Submit
+
+TEST STEPS:
+1. POST /process
+2. Use non-numeric system_id
+
+TEST DATA:
+system_id='ABC123'; data_file=test.csv
+
+EXPECTED RESULT:
+HTTP 400; JSON: { error: 'System ID must be numeric.' }
+
+Automatable: Yes",User authenticated,
+[SCAN-003] Submit scan without CSV file is rejected,Task,Highest,tectix-qa category-scan-processing type-submit automatable priority-p0,"Test ID: SCAN-003
+Category: Scan Processing > Submit
+
+TEST STEPS:
+1. POST /process
+2. Omit data_file field
+
+TEST DATA:
+system_id=12345 (no file)
+
+EXPECTED RESULT:
+HTTP 400; JSON: { error: 'data file upload is required.' }
+
+Automatable: Yes",User authenticated,
+[SCAN-004] Submit scan with non-CSV file is rejected,Task,Highest,tectix-qa category-scan-processing type-submit automatable priority-p0,"Test ID: SCAN-004
+Category: Scan Processing > Submit
+
+TEST STEPS:
+1. POST /process
+2. Upload non-CSV file
+
+TEST DATA:
+system_id=12345; data_file=test.xlsx
+
+EXPECTED RESULT:
+HTTP 400; JSON: { error: 'Only CSV files are supported.' }
+
+Automatable: Yes",User authenticated,
+[SCAN-005] Unauthenticated scan request is rejected,Task,Highest,tectix-qa category-scan-processing type-submit automatable priority-p0,"Test ID: SCAN-005
+Category: Scan Processing > Submit
+
+TEST STEPS:
+1. POST /process (no login)
+
+TEST DATA:
+system_id=12345; data_file=test.csv
+
+EXPECTED RESULT:
+HTTP 401 or redirect to login
+
+Automatable: Yes",No session,
+[SCAN-006] Job status returns processing state,Task,Highest,tectix-qa category-scan-processing type-status automatable priority-p0,"Test ID: SCAN-006
+Category: Scan Processing > Status
+
+TEST STEPS:
+1. POST /process → get job_id
+2. GET /status/<job_id> quickly after
+
+TEST DATA:
+job_id from SCAN-001
+
+EXPECTED RESULT:
+HTTP 200; JSON includes status field (processing/complete)
+
+Automatable: Yes",Scan submitted; job not yet complete,
+[SCAN-007] Job status returns completed state,Task,Highest,tectix-qa category-scan-processing type-status automatable priority-p0,"Test ID: SCAN-007
+Category: Scan Processing > Status
+
+TEST STEPS:
+1. POST /process → get job_id
+2. Poll GET /status/<job_id> until complete
+
+TEST DATA:
+job_id from SCAN-001
+
+EXPECTED RESULT:
+HTTP 200; JSON: { status: 'completed', ... }
+
+Automatable: Yes",Scan submitted and completed,
+[SCAN-008] Job status for unknown job_id,Task,High,tectix-qa category-scan-processing type-status automatable priority-p1,"Test ID: SCAN-008
+Category: Scan Processing > Status
+
+TEST STEPS:
+1. GET /status/nonexistent-job-id
+
+TEST DATA:
+job_id='fakeid123'
+
+EXPECTED RESULT:
+HTTP 404 or JSON with not_found status
+
+Automatable: Yes",Valid session; random job_id,
+[SCAN-009] User cannot access another user's job,Task,High,tectix-qa category-scan-processing type-status automatable priority-p1,"Test ID: SCAN-009
+Category: Scan Processing > Status
+
+TEST STEPS:
+1. Login as user A; submit scan; get job_id
+2. Login as user B
+3. GET /status/<user_A_job_id>
+
+TEST DATA:
+job_id belonging to user A
+
+EXPECTED RESULT:
+HTTP 404 or 403; user B cannot see user A's job
+
+Automatable: Yes",Two users; one has a job,Job isolation by owner
+[SCAN-010] SSE stream delivers output lines,Task,High,tectix-qa category-scan-processing type-streaming manual-only priority-p1,"Test ID: SCAN-010
+Category: Scan Processing > Streaming
+
+TEST STEPS:
+1. POST /process → get job_id
+2. GET /stream_output/<job_id>
+3. Listen for SSE events
+
+TEST DATA:
+job_id from active scan
+
+EXPECTED RESULT:
+HTTP 200; Content-Type: text/event-stream; data lines appear progressively
+
+Automatable: No",Scan in progress,Manual test with browser EventSource or curl --no-buffer
+[SCAN-011] Retrieve JSON results for completed scan,Task,Highest,tectix-qa category-scan-processing type-results automatable priority-p0,"Test ID: SCAN-011
+Category: Scan Processing > Results
+
+TEST STEPS:
+1. POST /process; wait for completion
+2. GET /reporting_json/<job_id>
+
+TEST DATA:
+job_id from completed scan
+
+EXPECTED RESULT:
+HTTP 200; JSON with test_results array; each result has test number, result (PASS/FAIL/CONCERN/NA), message
+
+Automatable: Yes",Scan completed,
+[SCAN-012] Download Excel checklist for completed scan,Task,Highest,tectix-qa category-scan-processing type-results automatable priority-p0,"Test ID: SCAN-012
+Category: Scan Processing > Results
+
+TEST STEPS:
+1. GET /download?job_id=<job_id>
+
+TEST DATA:
+job_id from completed scan
+
+EXPECTED RESULT:
+HTTP 200; Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; file download
+
+Automatable: Yes",Scan completed,
+[SCAN-013] Download before scan complete returns appropriate error,Task,High,tectix-qa category-scan-processing type-results automatable priority-p1,"Test ID: SCAN-013
+Category: Scan Processing > Results
+
+TEST STEPS:
+1. POST /process → get job_id
+2. Immediately GET /download?job_id=<job_id>
+
+TEST DATA:
+job_id from new scan
+
+EXPECTED RESULT:
+HTTP 404 or 400; not a server error
+
+Automatable: Yes",Scan in progress,
+[ACCT-001] Change password with correct current password,Task,Highest,tectix-qa category-account type-password automatable priority-p0,"Test ID: ACCT-001
+Category: Account > Password
+
+TEST STEPS:
+1. POST /api/account/password
+2. Provide current and new password
+
+TEST DATA:
+{ ""current_password"": ""TestPass123!"", ""new_password"": ""NewPass456!"" }
+
+EXPECTED RESULT:
+HTTP 200; JSON: { success: true }; can now login with new password
+
+Automatable: Yes",User authenticated,
+[ACCT-002] Change password with wrong current password,Task,Highest,tectix-qa category-account type-password automatable priority-p0,"Test ID: ACCT-002
+Category: Account > Password
+
+TEST STEPS:
+1. POST /api/account/password
+2. Provide wrong current password
+
+TEST DATA:
+{ ""current_password"": ""WrongPass"", ""new_password"": ""NewPass456!"" }
+
+EXPECTED RESULT:
+HTTP 400; JSON: { success: false, error: 'password change failed' }; password unchanged
+
+Automatable: Yes",User authenticated,
+[ACCT-003] Change password too short (less than 8 chars),Task,Highest,tectix-qa category-account type-password automatable priority-p0,"Test ID: ACCT-003
+Category: Account > Password
+
+TEST STEPS:
+1. POST /api/account/password
+2. Provide new password under 8 chars
+
+TEST DATA:
+{ ""current_password"": ""TestPass123!"", ""new_password"": ""short"" }
+
+EXPECTED RESULT:
+HTTP 400; JSON: { success: false, error: 'password too short' }
+
+Automatable: Yes",User authenticated,Minimum 8 chars enforced
+[ACCT-004] Change password with missing fields,Task,High,tectix-qa category-account type-password automatable priority-p1,"Test ID: ACCT-004
+Category: Account > Password
+
+TEST STEPS:
+1. POST /api/account/password
+2. Omit current_password or new_password
+
+TEST DATA:
+{ ""new_password"": ""NewPass456!"" } (no current_password)
+
+EXPECTED RESULT:
+HTTP 400; JSON: { success: false, error: 'current_password and new_password required' }
+
+Automatable: Yes",User authenticated,
+[ACCT-005] User cannot change another user's password via this endpoint,Task,High,tectix-qa category-account type-password automatable priority-p1,"Test ID: ACCT-005
+Category: Account > Password
+
+TEST STEPS:
+1. POST /api/account/password
+2. Include username field pointing to another user
+
+TEST DATA:
+{ ""username"": ""otheruser"", ""current_password"": ""..."", ""new_password"": ""..."" }
+
+EXPECTED RESULT:
+HTTP 403; JSON: { success: false, error: 'forbidden' }; logs security warning
+
+Automatable: Yes",User A authenticated,username field checked against session user
+[ACCT-006] Unauthenticated password change is rejected,Task,High,tectix-qa category-account type-password automatable priority-p1,"Test ID: ACCT-006
+Category: Account > Password
+
+TEST STEPS:
+1. POST /api/account/password (no login)
+
+TEST DATA:
+Any body
+
+EXPECTED RESULT:
+HTTP 401
+
+Automatable: Yes",No session,
+[ADMIN-001] Admin can list all users,Task,Highest,tectix-qa category-admin-panel type-user-management automatable priority-p0,"Test ID: ADMIN-001
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. GET /api/admin/users
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON array with user objects; includes testadmin and testuser
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-002] Non-admin cannot list users,Task,Highest,tectix-qa category-admin-panel type-user-management automatable priority-p0,"Test ID: ADMIN-002
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. GET /api/admin/users
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[ADMIN-003] Admin creates new user,Task,Highest,tectix-qa category-admin-panel type-user-management automatable priority-p0,"Test ID: ADMIN-003
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. POST /api/admin/users
+2. Provide username + password + role
+
+TEST DATA:
+{ ""username"": ""newuser"", ""password"": ""Pass123!"", ""role"": ""user"" }
+
+EXPECTED RESULT:
+HTTP 200 or 201; user created; visible in GET /api/admin/users
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-004] Create user with duplicate username fails,Task,High,tectix-qa category-admin-panel type-user-management automatable priority-p1,"Test ID: ADMIN-004
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. POST /api/admin/users
+2. Use existing username
+
+TEST DATA:
+{ ""username"": ""testadmin"", ""password"": ""Pass123!"", ""role"": ""user"" }
+
+EXPECTED RESULT:
+HTTP 409 or 400; error response; no duplicate created
+
+Automatable: Yes",Admin authenticated; user already exists,
+[ADMIN-005] Create user with missing required fields fails,Task,High,tectix-qa category-admin-panel type-user-management automatable priority-p1,"Test ID: ADMIN-005
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. POST /api/admin/users
+2. Omit password
+
+TEST DATA:
+{ ""username"": ""incomplete"" }
+
+EXPECTED RESULT:
+HTTP 400 or 422; user not created
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-006] Admin deletes a user,Task,Highest,tectix-qa category-admin-panel type-user-management automatable priority-p0,"Test ID: ADMIN-006
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. DELETE /api/admin/users/<username>
+
+TEST DATA:
+username=tobedeleted
+
+EXPECTED RESULT:
+HTTP 200; user no longer in GET /api/admin/users; deleted user cannot login
+
+Automatable: Yes",Admin authenticated; target user exists,
+[ADMIN-007] Delete non-existent user returns 404,Task,High,tectix-qa category-admin-panel type-user-management automatable priority-p1,"Test ID: ADMIN-007
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. DELETE /api/admin/users/doesnotexist
+
+TEST DATA:
+username=doesnotexist
+
+EXPECTED RESULT:
+HTTP 404
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-008] Admin cannot delete themselves,Task,High,tectix-qa category-admin-panel type-user-management automatable priority-p1,"Test ID: ADMIN-008
+Category: Admin Panel > User Management
+
+TEST STEPS:
+1. DELETE /api/admin/users/<own_username>
+
+TEST DATA:
+Own admin username
+
+EXPECTED RESULT:
+HTTP 400 or 403; admin account preserved
+
+Automatable: Yes",Admin authenticated,Self-delete protection
+[ADMIN-009] Admin can list portfolio systems,Task,Highest,tectix-qa category-admin-panel type-systems automatable priority-p0,"Test ID: ADMIN-009
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. GET /api/admin/systems
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON array of systems (may be empty)
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-010] Admin adds system to portfolio,Task,Highest,tectix-qa category-admin-panel type-systems automatable priority-p0,"Test ID: ADMIN-010
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. POST /api/admin/systems
+2. Provide system_id (integer) and optional name
+
+TEST DATA:
+{ ""system_id"": 12345, ""system_name"": ""Test System"" }
+
+EXPECTED RESULT:
+HTTP 200 or 201; system appears in GET /api/admin/systems
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-011] Add system with duplicate system_id,Task,High,tectix-qa category-admin-panel type-systems automatable priority-p1,"Test ID: ADMIN-011
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. POST /api/admin/systems with existing system_id
+
+TEST DATA:
+{ ""system_id"": 12345 }
+
+EXPECTED RESULT:
+HTTP 409 or 400; duplicate rejected
+
+Automatable: Yes",Admin authenticated; system already exists,
+[ADMIN-012] Admin uploads CSV for a system,Task,Highest,tectix-qa category-admin-panel type-systems automatable priority-p0,"Test ID: ADMIN-012
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. POST /api/admin/systems/<system_id>/csv
+2. Upload CSV file (multipart)
+
+TEST DATA:
+system_id=<id>; CSV file
+
+EXPECTED RESULT:
+HTTP 200; CSV path stored; visible in system record
+
+Automatable: Yes",Admin authenticated; system exists in portfolio,
+[ADMIN-013] Admin updates (unsets) CSV path for a system,Task,High,tectix-qa category-admin-panel type-systems automatable priority-p1,"Test ID: ADMIN-013
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. PATCH /api/admin/systems/<system_id>/csv
+
+TEST DATA:
+system_id=<id>
+
+EXPECTED RESULT:
+HTTP 200; CSV path cleared/updated
+
+Automatable: Yes",Admin authenticated; system with CSV,
+[ADMIN-014] Admin deletes system from portfolio,Task,Highest,tectix-qa category-admin-panel type-systems automatable priority-p0,"Test ID: ADMIN-014
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. DELETE /api/admin/systems/<system_id>
+
+TEST DATA:
+system_id=<id>
+
+EXPECTED RESULT:
+HTTP 200; system no longer in GET /api/admin/systems
+
+Automatable: Yes",Admin authenticated; system exists,
+[ADMIN-015] Delete non-existent system returns 404,Task,High,tectix-qa category-admin-panel type-systems automatable priority-p1,"Test ID: ADMIN-015
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. DELETE /api/admin/systems/99999
+
+TEST DATA:
+system_id=99999
+
+EXPECTED RESULT:
+HTTP 404
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-016] Non-admin cannot manage systems,Task,High,tectix-qa category-admin-panel type-systems automatable priority-p1,"Test ID: ADMIN-016
+Category: Admin Panel > Systems
+
+TEST STEPS:
+1. GET /api/admin/systems
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[ADMIN-017] Admin can retrieve log info,Task,High,tectix-qa category-admin-panel type-logs automatable priority-p1,"Test ID: ADMIN-017
+Category: Admin Panel > Logs
+
+TEST STEPS:
+1. GET /api/admin/logs/info
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON with log file info (size, path, etc.)
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-018] Admin can tail log file,Task,High,tectix-qa category-admin-panel type-logs automatable priority-p1,"Test ID: ADMIN-018
+Category: Admin Panel > Logs
+
+TEST STEPS:
+1. GET /api/admin/logs/tail
+
+TEST DATA:
+Optional: ?lines=50
+
+EXPECTED RESULT:
+HTTP 200; JSON with array of recent log lines
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-019] Admin can search logs,Task,High,tectix-qa category-admin-panel type-logs automatable priority-p1,"Test ID: ADMIN-019
+Category: Admin Panel > Logs
+
+TEST STEPS:
+1. POST /api/admin/logs/search
+2. Provide search query
+
+TEST DATA:
+{ ""query"": ""LOGIN"" }
+
+EXPECTED RESULT:
+HTTP 200; JSON with matching log lines
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-020] Admin can download log file,Task,Medium,tectix-qa category-admin-panel type-logs automatable priority-p2,"Test ID: ADMIN-020
+Category: Admin Panel > Logs
+
+TEST STEPS:
+1. GET /api/admin/logs/download
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; file download response; Content-Disposition header set
+
+Automatable: Yes",Admin authenticated,
+[ADMIN-021] Non-admin cannot access logs,Task,High,tectix-qa category-admin-panel type-logs automatable priority-p1,"Test ID: ADMIN-021
+Category: Admin Panel > Logs
+
+TEST STEPS:
+1. GET /api/admin/logs/info
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[POL-001] Admin lists all scan policies,Task,Highest,tectix-qa category-scan-policies type-crud automatable priority-p0,"Test ID: POL-001
+Category: Scan Policies > CRUD
+
+TEST STEPS:
+1. GET /api/policies
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON array of policies (may be empty)
+
+Automatable: Yes",Admin authenticated,
+[POL-002] Admin creates daily scan policy,Task,Highest,tectix-qa category-scan-policies type-crud automatable priority-p0,"Test ID: POL-002
+Category: Scan Policies > CRUD
+
+TEST STEPS:
+1. POST /api/policies
+2. Set frequency=DAILY
+
+TEST DATA:
+{ ""name"": ""Daily Scan"", ""frequency"": ""DAILY"", ""time_of_day"": ""02:00"", ""enabled"": true }
+
+EXPECTED RESULT:
+HTTP 200 or 201; policy created with id; visible in GET /api/policies
+
+Automatable: Yes",Admin authenticated,
+[POL-003] Admin creates weekly scan policy,Task,Highest,tectix-qa category-scan-policies type-crud automatable priority-p0,"Test ID: POL-003
+Category: Scan Policies > CRUD
+
+TEST STEPS:
+1. POST /api/policies
+2. Set frequency=WEEKLY with day_of_week
+
+TEST DATA:
+{ ""name"": ""Weekly Scan"", ""frequency"": ""WEEKLY"", ""day_of_week"": ""Monday"" }
+
+EXPECTED RESULT:
+HTTP 200 or 201; policy created
+
+Automatable: Yes",Admin authenticated,
+[POL-004] Create policy with invalid frequency,Task,High,tectix-qa category-scan-policies type-crud automatable priority-p1,"Test ID: POL-004
+Category: Scan Policies > CRUD
+
+TEST STEPS:
+1. POST /api/policies
+2. Use unsupported frequency value
+
+TEST DATA:
+{ ""name"": ""Bad"", ""frequency"": ""HOURLY"" }
+
+EXPECTED RESULT:
+HTTP 400 or 422; valid frequencies: DAILY/WEEKLY/BIWEEKLY/MONTHLY only
+
+Automatable: Yes",Admin authenticated,
+[POL-005] Admin updates existing scan policy,Task,High,tectix-qa category-scan-policies type-crud automatable priority-p1,"Test ID: POL-005
+Category: Scan Policies > CRUD
+
+TEST STEPS:
+1. PUT /api/policies/<policy_id>
+2. Change name and enabled state
+
+TEST DATA:
+{ ""name"": ""Updated Name"", ""enabled"": false }
+
+EXPECTED RESULT:
+HTTP 200; policy updated in GET /api/policies
+
+Automatable: Yes",Admin authenticated; policy exists,
+[POL-006] Admin deletes scan policy,Task,Highest,tectix-qa category-scan-policies type-crud automatable priority-p0,"Test ID: POL-006
+Category: Scan Policies > CRUD
+
+TEST STEPS:
+1. DELETE /api/policies/<policy_id>
+
+TEST DATA:
+policy_id=<id>
+
+EXPECTED RESULT:
+HTTP 200; policy no longer in GET /api/policies
+
+Automatable: Yes",Admin authenticated; policy exists,
+[POL-007] Enroll systems in scan policy,Task,Highest,tectix-qa category-scan-policies type-enrollment automatable priority-p0,"Test ID: POL-007
+Category: Scan Policies > Enrollment
+
+TEST STEPS:
+1. POST /api/policies/<policy_id>/systems
+2. Provide array of system IDs
+
+TEST DATA:
+{ ""system_ids"": [1, 2, 3] }
+
+EXPECTED RESULT:
+HTTP 200 or 201; systems enrolled; visible in policy details
+
+Automatable: Yes",Admin authenticated; policy and systems exist,
+[POL-008] Remove systems from scan policy,Task,High,tectix-qa category-scan-policies type-enrollment automatable priority-p1,"Test ID: POL-008
+Category: Scan Policies > Enrollment
+
+TEST STEPS:
+1. DELETE /api/policies/<policy_id>/systems
+2. Provide array of system IDs to remove
+
+TEST DATA:
+{ ""system_ids"": [1] }
+
+EXPECTED RESULT:
+HTTP 200; systems no longer enrolled in policy
+
+Automatable: Yes",Admin authenticated; systems enrolled in policy,
+[POL-009] Manually trigger policy run,Task,High,tectix-qa category-scan-policies type-execution automatable priority-p1,"Test ID: POL-009
+Category: Scan Policies > Execution
+
+TEST STEPS:
+1. POST /api/policies/<policy_id>/run
+
+TEST DATA:
+policy_id=<id>
+
+EXPECTED RESULT:
+HTTP 200 or 202; scan triggered for enrolled systems
+
+Automatable: Yes",Admin authenticated; policy with enrolled systems,
+[POL-010] Non-admin cannot manage policies,Task,High,tectix-qa category-scan-policies type-access automatable priority-p1,"Test ID: POL-010
+Category: Scan Policies > Access
+
+TEST STEPS:
+1. GET /api/policies
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[MON-001] Retrieve monitored systems status,Task,Highest,tectix-qa category-continuous-monitoring type-dashboard automatable priority-p0,"Test ID: MON-001
+Category: Continuous Monitoring > Dashboard
+
+TEST STEPS:
+1. GET /api/monitoring/continuous
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON with array of monitored systems; each has system_id, readiness_score, pass/fail/concern counts
+
+Automatable: Yes",Admin authenticated; systems enrolled in policies,
+[MON-002] Monitoring returns empty array when no systems enrolled,Task,High,tectix-qa category-continuous-monitoring type-dashboard automatable priority-p1,"Test ID: MON-002
+Category: Continuous Monitoring > Dashboard
+
+TEST STEPS:
+1. GET /api/monitoring/continuous
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 200; JSON: [] or { systems: [] }
+
+Automatable: Yes",Admin authenticated; no systems in portfolio,
+[MON-003] Non-admin cannot view monitoring dashboard,Task,High,tectix-qa category-continuous-monitoring type-dashboard automatable priority-p1,"Test ID: MON-003
+Category: Continuous Monitoring > Dashboard
+
+TEST STEPS:
+1. GET /api/monitoring/continuous
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[MON-004] Readiness score reflects test results accurately,Task,Medium,tectix-qa category-continuous-monitoring type-scores manual-only priority-p2,"Test ID: MON-004
+Category: Continuous Monitoring > Scores
+
+TEST STEPS:
+1. Complete a scan for a system
+2. GET /api/monitoring/continuous
+3. Check readiness_score
+
+TEST DATA:
+System with known pass/fail ratio
+
+EXPECTED RESULT:
+Readiness score = (PASS count / total tests) * 100; validates against known scan data
+
+Automatable: No",System with completed scan,Manual verification against known test results
+[EMASS-001] Test eMASS connectivity with valid credentials,Task,High,tectix-qa category-emass-integration type-connection manual-only priority-p1,"Test ID: EMASS-001
+Category: eMASS Integration > Connection
+
+TEST STEPS:
+1. POST /api/admin/test_emass (GET also supported)
+
+TEST DATA:
+Valid eMASS creds in config
+
+EXPECTED RESULT:
+HTTP 200; JSON shows connection result
+
+Automatable: No",Admin authenticated; eMASS config set,Requires live or mocked eMASS endpoint
+[EMASS-002] Test eMASS connectivity with invalid credentials,Task,High,tectix-qa category-emass-integration type-connection manual-only priority-p1,"Test ID: EMASS-002
+Category: eMASS Integration > Connection
+
+TEST STEPS:
+1. POST /api/admin/test_emass
+
+TEST DATA:
+Invalid eMASS creds
+
+EXPECTED RESULT:
+HTTP 200 with error or HTTP 4xx; connection failure reported (not 500)
+
+Automatable: No",Admin authenticated; wrong eMASS creds,
+[EMASS-003] Sync data from eMASS,Task,Medium,tectix-qa category-emass-integration type-sync manual-only priority-p2,"Test ID: EMASS-003
+Category: eMASS Integration > Sync
+
+TEST STEPS:
+1. POST /api/admin/update_emass
+
+TEST DATA:
+Valid eMASS configuration
+
+EXPECTED RESULT:
+HTTP 200; systems synced from eMASS
+
+Automatable: No",Admin authenticated; valid eMASS connection,
+[EMASS-004] Non-admin cannot manage eMASS connection,Task,High,tectix-qa category-emass-integration type-access automatable priority-p1,"Test ID: EMASS-004
+Category: eMASS Integration > Access
+
+TEST STEPS:
+1. POST /api/admin/test_emass
+
+TEST DATA:
+Any
+
+EXPECTED RESULT:
+HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[SEC-001] Protected endpoints require authentication,Task,Highest,tectix-qa category-security type-authentication automatable priority-p0,"Test ID: SEC-001
+Category: Security > Authentication
+
+TEST STEPS:
+1. Access each protected endpoint without login
+2. Test endpoints: /process, /api/admin/users, /api/policies, /api/account/password
+
+TEST DATA:
+No session
+
+EXPECTED RESULT:
+All protected endpoints return HTTP 401 or redirect; not accessible without valid session
+
+Automatable: Yes",No session,Automated: loop through all endpoints
+[SEC-002] Admin endpoints reject regular users,Task,Highest,tectix-qa category-security type-authorization automatable priority-p0,"Test ID: SEC-002
+Category: Security > Authorization
+
+TEST STEPS:
+1. Login as regular user
+2. Attempt admin-only endpoints: GET /api/admin/users, /api/admin/systems, /api/policies
+
+TEST DATA:
+Regular user session
+
+EXPECTED RESULT:
+All admin endpoints return HTTP 403
+
+Automatable: Yes",Regular user authenticated,
+[SEC-003] System ID field rejects SQL injection,Task,High,tectix-qa category-security type-injection automatable priority-p1,"Test ID: SEC-003
+Category: Security > Injection
+
+TEST STEPS:
+1. POST /process with SQL injection in system_id field
+
+TEST DATA:
+system_id="" OR 1=1 --
+
+EXPECTED RESULT:
+HTTP 400; isdigit() check blocks non-numeric; no SQL executed
+
+Automatable: Yes",User authenticated,system_id validates with .isdigit() before use
+[SEC-004] File upload rejects non-CSV files,Task,High,tectix-qa category-security type-upload automatable priority-p1,"Test ID: SEC-004
+Category: Security > Upload
+
+TEST STEPS:
+1. POST /process with .exe, .php, .js, .xlsx files
+
+TEST DATA:
+data_file=malicious.exe (or .php, etc.)
+
+EXPECTED RESULT:
+HTTP 400; error: 'Only CSV files are supported.'
+
+Automatable: Yes",User authenticated,filename extension check enforced
+[SEC-005] Passwords are hashed in database,Task,High,tectix-qa category-security type-passwords manual-only priority-p1,"Test ID: SEC-005
+Category: Security > Passwords
+
+TEST STEPS:
+1. Create user
+2. Inspect database users table
+3. Check password_hash field
+
+TEST DATA:
+Username/password pair
+
+EXPECTED RESULT:
+password_hash field is NOT the plaintext password; length > 40 chars; bcrypt/scrypt format
+
+Automatable: No",Direct DB access for verification,DB inspection needed; manual test
+[SEC-006] Session cookie has secure attributes,Task,High,tectix-qa category-security type-session manual-only priority-p1,"Test ID: SEC-006
+Category: Security > Session
+
+TEST STEPS:
+1. Login and capture Set-Cookie header
+2. Inspect cookie flags
+
+TEST DATA:
+Login request over HTTPS
+
+EXPECTED RESULT:
+Cookie has HttpOnly flag; SameSite attribute set; Secure flag if HTTPS
+
+Automatable: No",HTTPS environment,Manual inspection with browser devtools
+[SEC-007] Rate limiting is IP-based not user-based,Task,High,tectix-qa category-security type-rate-limiting automatable priority-p1,"Test ID: SEC-007
+Category: Security > Rate Limiting
+
+TEST STEPS:
+1. Send 11+ login attempts from same IP using different usernames
+2. Confirm 429 after limit exceeded
+
+TEST DATA:
+Multiple usernames from same IP
+
+EXPECTED RESULT:
+HTTP 429 triggered based on IP regardless of username used
+
+Automatable: Yes",Different usernames same IP,Rate limit tracks per IP
+[SEC-008] Login response times are consistent,Task,Medium,tectix-qa category-security type-timing manual-only priority-p2,"Test ID: SEC-008
+Category: Security > Timing
+
+TEST STEPS:
+1. Login with valid user + wrong password (time it)
+2. Login with invalid user + any password (time it)
+3. Compare timings (run 5x each)
+
+TEST DATA:
+Mix of valid/invalid users
+
+EXPECTED RESULT:
+Response times within ~50ms of each other; _auth_sleep normalizes timing
+
+Automatable: No",App running,Manual test with curl timing
+[PERF-001] Single system scan completes in reasonable time,Task,Medium,tectix-qa category-performance type-scan manual-only priority-p2,"Test ID: PERF-001
+Category: Performance > Scan
+
+TEST STEPS:
+1. POST /process with valid system + CSV
+2. Poll status until completed
+3. Record elapsed time
+
+TEST DATA:
+system_id=12345; typical CSV file
+
+EXPECTED RESULT:
+Scan completes within 120 seconds for a typical CSV
+
+Automatable: No",System with CSV ready,Baseline depends on CSV size and # of tests
+[PERF-002] API endpoints respond within acceptable time,Task,Medium,tectix-qa category-performance type-api manual-only priority-p2,"Test ID: PERF-002
+Category: Performance > API
+
+TEST STEPS:
+1. Run GET /api/session 50 times
+2. Record min/max/avg response time
+
+TEST DATA:
+Authenticated session
+
+EXPECTED RESULT:
+Average response time < 200ms; no timeouts
+
+Automatable: No",App running under normal load,Use locust or wrk for load testing
+[PERF-003] Multiple concurrent scans do not cause errors,Task,Low,tectix-qa category-performance type-concurrent manual-only priority-p3,"Test ID: PERF-003
+Category: Performance > Concurrent
+
+TEST STEPS:
+1. Submit 3 simultaneous scans (one per user)
+2. Monitor for errors or data cross-contamination
+
+TEST DATA:
+3 different system CSVs
+
+EXPECTED RESULT:
+All 3 scans complete successfully; each user sees only their own results; no job cross-contamination
+
+Automatable: No",Multiple users authenticated,
+[UI-001] Login form renders correctly,Task,Highest,tectix-qa category-frontend type-login-page manual-only priority-p0,"Test ID: UI-001
+Category: Frontend > Login Page
+
+TEST STEPS:
+1. Open app URL in browser
+2. Observe login page
+
+TEST DATA:
+Chrome/Firefox
+
+EXPECTED RESULT:
+Username and password fields visible; Login button present; no JS console errors
+
+Automatable: No",App running,Manual
+[UI-002] Successful login redirects to dashboard,Task,Highest,tectix-qa category-frontend type-login-page manual-only priority-p0,"Test ID: UI-002
+Category: Frontend > Login Page
+
+TEST STEPS:
+1. Enter valid username/password
+2. Click Login
+
+TEST DATA:
+testadmin / TestPass123!
+
+EXPECTED RESULT:
+Redirected to dashboard; TopNav shows username; no error messages
+
+Automatable: No",App running; valid credentials,Manual
+[UI-003] Dashboard loads and shows scan interface,Task,Highest,tectix-qa category-frontend type-dashboard manual-only priority-p0,"Test ID: UI-003
+Category: Frontend > Dashboard
+
+TEST STEPS:
+1. Login and navigate to dashboard
+
+TEST DATA:
+Valid session
+
+EXPECTED RESULT:
+System ID input visible; File upload button present; no broken UI elements
+
+Automatable: No",User authenticated,Manual
+[UI-004] Upload CSV and submit scan shows spinner,Task,Highest,tectix-qa category-frontend type-dashboard manual-only priority-p0,"Test ID: UI-004
+Category: Frontend > Dashboard
+
+TEST STEPS:
+1. Enter numeric system ID
+2. Upload CSV file
+3. Click submit/process
+
+TEST DATA:
+system_id=12345; test.csv
+
+EXPECTED RESULT:
+Processing spinner / loading indicator appears; status updates stream in
+
+Automatable: No",User authenticated; CSV file ready,Manual
+[UI-005] Scan results display in test table,Task,Highest,tectix-qa category-frontend type-dashboard manual-only priority-p0,"Test ID: UI-005
+Category: Frontend > Dashboard
+
+TEST STEPS:
+1. Complete a scan
+2. Observe results panel
+
+TEST DATA:
+Completed job
+
+EXPECTED RESULT:
+TestTable component shows rows; PASS in green, FAIL in red, CONCERN in yellow, NA in grey; readiness gauge shows score
+
+Automatable: No",Scan completed,Manual
+[UI-006] Admin panel accessible only to admin users,Task,Highest,tectix-qa category-frontend type-admin-panel manual-only priority-p0,"Test ID: UI-006
+Category: Frontend > Admin Panel
+
+TEST STEPS:
+1. Login as admin
+2. Navigate to Admin Panel
+
+TEST DATA:
+Admin session
+
+EXPECTED RESULT:
+Admin Panel loads with sidebar: Users, Portfolio, Policies, Logs, eMASS, About
+
+Automatable: No",Admin user authenticated,Manual
+[UI-007] Regular user does not see admin panel link,Task,High,tectix-qa category-frontend type-admin-panel manual-only priority-p1,"Test ID: UI-007
+Category: Frontend > Admin Panel
+
+TEST STEPS:
+1. Login as regular user
+2. Check TopNav
+
+TEST DATA:
+User session
+
+EXPECTED RESULT:
+No Admin Panel link/button visible in navigation
+
+Automatable: No",Regular user authenticated,Manual
+[UI-008] User can change password from Account page,Task,High,tectix-qa category-frontend type-account manual-only priority-p1,"Test ID: UI-008
+Category: Frontend > Account
+
+TEST STEPS:
+1. Navigate to Account page
+2. Fill in current and new password
+3. Submit
+
+TEST DATA:
+Valid password change data
+
+EXPECTED RESULT:
+Success message shown; can login with new password
+
+Automatable: No",User authenticated,Manual
+[UI-009] 2FA enrollment modal shows QR code,Task,High,tectix-qa category-frontend type-2fa-enrollment manual-only priority-p1,"Test ID: UI-009
+Category: Frontend > 2FA Enrollment
+
+TEST STEPS:
+1. Navigate to Account page
+2. Click Enable 2FA
+
+TEST DATA:
+No existing 2FA
+
+EXPECTED RESULT:
+Modal appears with QR code and manual entry code; instructions shown
+
+Automatable: No",User without 2FA authenticated,Manual
+[UI-010] Session expired prompt appears on timeout,Task,High,tectix-qa category-frontend type-session-expired manual-only priority-p1,"Test ID: UI-010
+Category: Frontend > Session Expired
+
+TEST STEPS:
+1. Leave app idle until session expires
+2. Try to interact with app
+
+TEST DATA:
+Session timeout value
+
+EXPECTED RESULT:
+SessionExpiredPrompt component appears; user prompted to log back in
+
+Automatable: No",User with active session,Manual; timing dependent
+[UI-011] Classification banner displays on all pages,Task,Medium,tectix-qa category-frontend type-classification manual-only priority-p2,"Test ID: UI-011
+Category: Frontend > Classification
+
+TEST STEPS:
+1. Open any page of the app
+
+TEST DATA:
+None
+
+EXPECTED RESULT:
+ClassificationBanner component visible at top and/or bottom of page
+
+Automatable: No",App running,Manual
+[UI-012] Reporting page shows past scan results,Task,High,tectix-qa category-frontend type-reporting manual-only priority-p1,"Test ID: UI-012
+Category: Frontend > Reporting
+
+TEST STEPS:
+1. Navigate to Reporting page
+2. Look for historical jobs
+
+TEST DATA:
+User with job history
+
+EXPECTED RESULT:
+Previous scans listed; can view JSON results; download button works
+
+Automatable: No",User with completed scans,Manual
+[UI-013] Monitoring page shows enrolled systems,Task,High,tectix-qa category-frontend type-continuous-monitoring manual-only priority-p1,"Test ID: UI-013
+Category: Frontend > Continuous Monitoring
+
+TEST STEPS:
+1. Login as admin
+2. Navigate to Continuous Monitoring
+
+TEST DATA:
+Systems enrolled in policies
+
+EXPECTED RESULT:
+MonitoringGauge and ComplianceTimeChart visible; system cards show readiness scores
+
+Automatable: No",Admin with enrolled systems,Manual
+[INT-001] Full scan workflow: login > upload CSV > scan > download,Task,Highest,tectix-qa category-integration type-end-to-end manual-only priority-p0,"Test ID: INT-001
+Category: Integration > End-to-End
+
+TEST STEPS:
+1. Login as user
+2. Upload CSV via Dashboard
+3. Submit scan with numeric system ID
+4. Wait for completion
+5. Download Excel checklist
+
+TEST DATA:
+testadmin; system_id=12345; valid CSV
+
+EXPECTED RESULT:
+All steps succeed; downloaded file is valid Excel; contains test results
+
+Automatable: No",Fresh session,Manual E2E; smoke test for releases
+[INT-002] Admin workflow: create user > login as new user > scan > view results,Task,Highest,tectix-qa category-integration type-end-to-end manual-only priority-p0,"Test ID: INT-002
+Category: Integration > End-to-End
+
+TEST STEPS:
+1. Admin creates new user
+2. Logout
+3. Login as new user
+4. Submit scan
+5. View results
+
+TEST DATA:
+New user credentials; valid CSV
+
+EXPECTED RESULT:
+New user can login and complete a scan; admin can see no cross-data contamination
+
+Automatable: No",Fresh admin session,Manual E2E
+[INT-003] Policy automation: create policy > add system > trigger run > check monitoring,Task,High,tectix-qa category-integration type-end-to-end manual-only priority-p1,"Test ID: INT-003
+Category: Integration > End-to-End
+
+TEST STEPS:
+1. Create scan policy (DAILY)
+2. Add system to portfolio
+3. Enroll system in policy
+4. Trigger policy run manually (POST /api/policies/<id>/run)
+5. Check GET /api/monitoring/continuous
+
+TEST DATA:
+Valid system and CSV
+
+EXPECTED RESULT:
+Policy runs; monitoring page reflects updated scan results
+
+Automatable: No",Admin session,Manual E2E
+[INT-004] Recovery from failed scan (bad CSV),Task,Medium,tectix-qa category-integration type-end-to-end automatable priority-p2,"Test ID: INT-004
+Category: Integration > End-to-End
+
+TEST STEPS:
+1. Upload CSV with corrupted/empty content
+2. Submit scan
+3. Check status
+
+TEST DATA:
+Empty or malformed CSV
+
+EXPECTED RESULT:
+System handles gracefully; no 500 error; meaningful error message returned
+
+Automatable: Yes",User authenticated,

@@ -1,0 +1,210 @@
+Issue Id,Test Type,Summary,Precondition,Action,Data,Result,Labels,Priority
+AUTH-001,Generic,[AUTH-001] Login with valid credentials (no 2FA),App running; user without 2FA exists,POST /api/login,"{ ""username"": ""testadmin"", ""password"": ""TestPass123!"" }",,tectix-qa category-authentication priority-p0,Highest
+AUTH-001,,,,Send JSON body,,,,
+AUTH-001,,,,Check response,,"HTTP 200; JSON: { success: true, user: 'testadmin', two_factor_required: false }; session cookie set",,
+AUTH-002,Generic,[AUTH-002] Login with wrong password,App running; valid user exists,POST /api/login,"{ ""username"": ""testadmin"", ""password"": ""WrongPass"" }",,tectix-qa category-authentication priority-p0,Highest
+AUTH-002,,,,Send invalid password,,"HTTP 401; JSON: { success: false, error: 'Invalid credentials' }",,
+AUTH-003,Generic,[AUTH-003] Login with non-existent username,App running,POST /api/login,"{ ""username"": ""nobody"", ""password"": ""anything"" }",,tectix-qa category-authentication priority-p0,Highest
+AUTH-003,,,,Use unknown username,,"HTTP 401; JSON: { success: false, error: 'Invalid credentials' } - same response as wrong password (no enumeration)",,
+AUTH-004,Generic,[AUTH-004] Login triggers 2FA challenge,App running; user WITH 2FA enrolled,POST /api/login,"{ ""username"": ""2fauser"", ""password"": ""TestPass123!"" }",,tectix-qa category-authentication priority-p0,Highest
+AUTH-004,,,,Use valid credentials for 2FA user,,"HTTP 200; JSON: { success: false, two_factor_required: true, user: null }; pending session set (NOT full session)",,
+AUTH-005,Generic,[AUTH-005] Login with invalid JSON format,App running,POST /api/login,"{ ""username"": """" } (missing password)",,tectix-qa category-authentication priority-p1,High
+AUTH-005,,,,Send malformed payload,,"HTTP 400; JSON: { success: false, error: 'Invalid username/password format' }",,
+AUTH-006,Generic,[AUTH-006] Rate limit blocks excess login attempts,App running,POST /api/login 11+ times in quick succession,"{ ""username"": ""any"", ""password"": ""any"" } x11+",,tectix-qa category-authentication priority-p1,High
+AUTH-006,,,,Use any credentials,,"HTTP 429 on 11th+ attempt; JSON: { success: false, error: 'Too many login attempts...' }",,
+AUTH-007,Generic,[AUTH-007] Login with empty body,App running,POST /api/login,{},,tectix-qa category-authentication priority-p1,High
+AUTH-007,,,,Send empty JSON {},,HTTP 400; validation error response,,
+AUTH-008,Manual,[AUTH-008] Login response does not reveal timing difference,App running,POST /api/login with valid user/wrong pass - record time,Valid user + wrong pass; Invalid user + any pass,,tectix-qa category-authentication priority-p2,Medium
+AUTH-008,,,,POST /api/login with invalid user/any pass - record time,,,,
+AUTH-008,,,,Compare response times,,Response times should be roughly equal (within ~50ms) - _auth_sleep normalizes timing,,
+AUTH-009,Generic,[AUTH-009] Session check returns authenticated state,User logged in,POST /api/login to authenticate,Valid credentials,,tectix-qa category-authentication priority-p0,Highest
+AUTH-009,,,,GET /api/session,,"HTTP 200; JSON: { authenticated: true, user: 'testadmin', is_admin: true/false }",,
+AUTH-010,Generic,[AUTH-010] Session check returns unauthenticated when not logged in,No session,GET /api/session (no login first),None,HTTP 200; JSON: { authenticated: false },tectix-qa category-authentication priority-p0,Highest
+AUTH-011,Generic,[AUTH-011] Session check returns show_welcome flag for new admin,First login as default admin,Login as default admin,Default admin credentials,,tectix-qa category-authentication priority-p1,High
+AUTH-011,,,,GET /api/session,,"JSON includes: { show_welcome: true, is_default_admin: true, needs_password_reset: true }",,
+AUTH-012,Manual,[AUTH-012] Stale session (wrong server_run_id) is cleared,Old session cookie from previous server run,Inject session with old server_run_id,Session cookie with mismatched server_run_id,,tectix-qa category-authentication priority-p1,High
+AUTH-012,,,,GET /api/session,,HTTP 200; JSON: { authenticated: false }; old session cleared,,
+AUTH-013,Generic,[AUTH-013] Logout clears session,User logged in,POST /api/login,Valid credentials,,tectix-qa category-authentication priority-p0,Highest
+AUTH-013,,,,Confirm GET /api/session returns authenticated: true,,,,
+AUTH-013,,,,POST /api/logout,,,,
+AUTH-013,,,,GET /api/session,,POST /api/logout returns HTTP 200; subsequent GET /api/session returns authenticated: false,,
+AUTH-014,Generic,[AUTH-014] Logout on unauthenticated session does not error,No session,POST /api/logout without logging in,None,HTTP 200 or 401 - no server error (no 500),tectix-qa category-authentication priority-p1,High
+2FA-001,Generic,[2FA-001] 2FA status returns not enrolled for new user,User logged in; 2FA not set up,POST /api/login (no-2FA user),Valid credentials,,tectix-qa category-two-factor-auth priority-p0,Highest
+2FA-001,,,,GET /api/account/2fa/status,,HTTP 200; JSON: { enrolled: false },,
+2FA-002,Generic,[2FA-002] Start 2FA enrollment returns QR code and secret,User logged in; 2FA not enrolled,POST /api/login,Valid credentials,,tectix-qa category-two-factor-auth priority-p0,Highest
+2FA-002,,,,POST /api/account/2fa/start,,"HTTP 200; JSON includes: { qr_code: '<data URI>', secret: '<base32 string>' }",,
+2FA-003,Manual,[2FA-003] Confirm 2FA with valid TOTP code,User in enrollment flow (secret from /start),POST /api/account/2fa/start,"{ ""code"": ""<valid TOTP>"" }",,tectix-qa category-two-factor-auth priority-p0,Highest
+2FA-003,,,,Generate TOTP from returned secret,,,,
+2FA-003,,,,POST /api/account/2fa/confirm with code,,HTTP 200; 2FA enrolled; JSON includes recovery_codes array,,
+2FA-004,Generic,[2FA-004] Confirm 2FA with invalid TOTP code,User in enrollment flow,POST /api/account/2fa/start,"{ ""code"": ""000000"" }",,tectix-qa category-two-factor-auth priority-p1,High
+2FA-004,,,,POST /api/account/2fa/confirm with wrong code,,HTTP 400 or 401; enrollment not completed,,
+2FA-005,Manual,[2FA-005] Complete 2FA login with valid TOTP,User with 2FA enrolled; pending session active,POST /api/login → two_factor_required: true,"{ ""code"": ""<valid TOTP>"" }",,tectix-qa category-two-factor-auth priority-p0,Highest
+2FA-005,,,,Generate TOTP from enrolled secret,,,,
+2FA-005,,,,POST /api/login/2fa with valid code,,"HTTP 200; full session established; JSON: { success: true, user: '...' }",,
+2FA-006,Generic,[2FA-006] 2FA login with invalid code is rejected,Pending 2FA session active,POST /api/login with 2FA user,"{ ""code"": ""123456"" }",,tectix-qa category-two-factor-auth priority-p0,Highest
+2FA-006,,,,POST /api/login/2fa with wrong code,,HTTP 401; session remains pending (not fully authenticated),,
+2FA-007,Manual,[2FA-007] 2FA login with expired pending session,More than timeout since /api/login,POST /api/login (2FA user),"{ ""code"": ""<valid TOTP>"" }",,tectix-qa category-two-factor-auth priority-p1,High
+2FA-007,,,,Wait for pending session timeout,,,,
+2FA-007,,,,POST /api/login/2fa,,HTTP 401; pending session expired error,,
+2FA-008,Generic,[2FA-008] Disable 2FA with valid current password,User with 2FA enrolled and logged in,POST /api/account/2fa/disable,"{ ""password"": ""TestPass123!"" }",,tectix-qa category-two-factor-auth priority-p1,High
+2FA-008,,,,Provide current password,,HTTP 200; 2FA disabled; subsequent GET /api/account/2fa/status returns enrolled: false,,
+2FA-009,Generic,[2FA-009] Disable 2FA with wrong password is rejected,User with 2FA enrolled and logged in,POST /api/account/2fa/disable with wrong password,"{ ""password"": ""WrongPass"" }",HTTP 400 or 401; 2FA remains enabled,tectix-qa category-two-factor-auth priority-p1,High
+2FA-010,Generic,[2FA-010] Regenerate recovery codes,User with 2FA enrolled and logged in,POST /api/account/2fa/recovery/regenerate,None,HTTP 200; new recovery_codes array returned; old codes invalidated,tectix-qa category-two-factor-auth priority-p1,High
+2FA-011,Generic,[2FA-011] Admin can disable user's 2FA,Admin logged in; target user has 2FA,POST /api/admin/users/<username>/2fa/disable,None (or admin confirmation),HTTP 200; target user's 2FA disabled; user's 2FA status becomes enrolled: false,tectix-qa category-two-factor-auth priority-p1,High
+2FA-012,Generic,[2FA-012] Non-admin cannot disable another user's 2FA,Regular user logged in,POST /api/admin/users/<username>/2fa/disable,None,HTTP 403; 2FA unchanged,tectix-qa category-two-factor-auth priority-p1,High
+SCAN-001,Generic,[SCAN-001] Submit valid system scan (form-data with numeric ID and CSV),User authenticated; valid CSV ready,POST /process (multipart/form-data),system_id=12345; data_file=test.csv,,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-001,,,,Include system_id (numeric) and CSV file,,"HTTP 202; JSON: { success: true, job_id: '<token>' }; background worker started",,
+SCAN-002,Generic,[SCAN-002] Submit scan with non-numeric system ID is rejected,User authenticated,POST /process,system_id='ABC123'; data_file=test.csv,,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-002,,,,Use non-numeric system_id,,HTTP 400; JSON: { error: 'System ID must be numeric.' },,
+SCAN-003,Generic,[SCAN-003] Submit scan without CSV file is rejected,User authenticated,POST /process,system_id=12345 (no file),,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-003,,,,Omit data_file field,,HTTP 400; JSON: { error: 'data file upload is required.' },,
+SCAN-004,Generic,[SCAN-004] Submit scan with non-CSV file is rejected,User authenticated,POST /process,system_id=12345; data_file=test.xlsx,,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-004,,,,Upload non-CSV file,,HTTP 400; JSON: { error: 'Only CSV files are supported.' },,
+SCAN-005,Generic,[SCAN-005] Unauthenticated scan request is rejected,No session,POST /process (no login),system_id=12345; data_file=test.csv,HTTP 401 or redirect to login,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-006,Generic,[SCAN-006] Job status returns processing state,Scan submitted; job not yet complete,POST /process → get job_id,job_id from SCAN-001,,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-006,,,,GET /status/<job_id> quickly after,,HTTP 200; JSON includes status field (processing/complete),,
+SCAN-007,Generic,[SCAN-007] Job status returns completed state,Scan submitted and completed,POST /process → get job_id,job_id from SCAN-001,,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-007,,,,Poll GET /status/<job_id> until complete,,"HTTP 200; JSON: { status: 'completed', ... }",,
+SCAN-008,Generic,[SCAN-008] Job status for unknown job_id,Valid session; random job_id,GET /status/nonexistent-job-id,job_id='fakeid123',HTTP 404 or JSON with not_found status,tectix-qa category-scan-processing priority-p1,High
+SCAN-009,Generic,[SCAN-009] User cannot access another user's job,Two users; one has a job,Login as user A; submit scan; get job_id,job_id belonging to user A,,tectix-qa category-scan-processing priority-p1,High
+SCAN-009,,,,Login as user B,,,,
+SCAN-009,,,,GET /status/<user_A_job_id>,,HTTP 404 or 403; user B cannot see user A's job,,
+SCAN-010,Manual,[SCAN-010] SSE stream delivers output lines,Scan in progress,POST /process → get job_id,job_id from active scan,,tectix-qa category-scan-processing priority-p1,High
+SCAN-010,,,,GET /stream_output/<job_id>,,,,
+SCAN-010,,,,Listen for SSE events,,HTTP 200; Content-Type: text/event-stream; data lines appear progressively,,
+SCAN-011,Generic,[SCAN-011] Retrieve JSON results for completed scan,Scan completed,POST /process; wait for completion,job_id from completed scan,,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-011,,,,GET /reporting_json/<job_id>,,"HTTP 200; JSON with test_results array; each result has test number, result (PASS/FAIL/CONCERN/NA), message",,
+SCAN-012,Generic,[SCAN-012] Download Excel checklist for completed scan,Scan completed,GET /download?job_id=<job_id>,job_id from completed scan,HTTP 200; Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; file download,tectix-qa category-scan-processing priority-p0,Highest
+SCAN-013,Generic,[SCAN-013] Download before scan complete returns appropriate error,Scan in progress,POST /process → get job_id,job_id from new scan,,tectix-qa category-scan-processing priority-p1,High
+SCAN-013,,,,Immediately GET /download?job_id=<job_id>,,HTTP 404 or 400; not a server error,,
+ACCT-001,Generic,[ACCT-001] Change password with correct current password,User authenticated,POST /api/account/password,"{ ""current_password"": ""TestPass123!"", ""new_password"": ""NewPass456!"" }",,tectix-qa category-account priority-p0,Highest
+ACCT-001,,,,Provide current and new password,,HTTP 200; JSON: { success: true }; can now login with new password,,
+ACCT-002,Generic,[ACCT-002] Change password with wrong current password,User authenticated,POST /api/account/password,"{ ""current_password"": ""WrongPass"", ""new_password"": ""NewPass456!"" }",,tectix-qa category-account priority-p0,Highest
+ACCT-002,,,,Provide wrong current password,,"HTTP 400; JSON: { success: false, error: 'password change failed' }; password unchanged",,
+ACCT-003,Generic,[ACCT-003] Change password too short (less than 8 chars),User authenticated,POST /api/account/password,"{ ""current_password"": ""TestPass123!"", ""new_password"": ""short"" }",,tectix-qa category-account priority-p0,Highest
+ACCT-003,,,,Provide new password under 8 chars,,"HTTP 400; JSON: { success: false, error: 'password too short' }",,
+ACCT-004,Generic,[ACCT-004] Change password with missing fields,User authenticated,POST /api/account/password,"{ ""new_password"": ""NewPass456!"" } (no current_password)",,tectix-qa category-account priority-p1,High
+ACCT-004,,,,Omit current_password or new_password,,"HTTP 400; JSON: { success: false, error: 'current_password and new_password required' }",,
+ACCT-005,Generic,[ACCT-005] User cannot change another user's password via this endpoint,User A authenticated,POST /api/account/password,"{ ""username"": ""otheruser"", ""current_password"": ""..."", ""new_password"": ""..."" }",,tectix-qa category-account priority-p1,High
+ACCT-005,,,,Include username field pointing to another user,,"HTTP 403; JSON: { success: false, error: 'forbidden' }; logs security warning",,
+ACCT-006,Generic,[ACCT-006] Unauthenticated password change is rejected,No session,POST /api/account/password (no login),Any body,HTTP 401,tectix-qa category-account priority-p1,High
+ADMIN-001,Generic,[ADMIN-001] Admin can list all users,Admin authenticated,GET /api/admin/users,None,HTTP 200; JSON array with user objects; includes testadmin and testuser,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-002,Generic,[ADMIN-002] Non-admin cannot list users,Regular user authenticated,GET /api/admin/users,None,HTTP 403,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-003,Generic,[ADMIN-003] Admin creates new user,Admin authenticated,POST /api/admin/users,"{ ""username"": ""newuser"", ""password"": ""Pass123!"", ""role"": ""user"" }",,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-003,,,,Provide username + password + role,,HTTP 200 or 201; user created; visible in GET /api/admin/users,,
+ADMIN-004,Generic,[ADMIN-004] Create user with duplicate username fails,Admin authenticated; user already exists,POST /api/admin/users,"{ ""username"": ""testadmin"", ""password"": ""Pass123!"", ""role"": ""user"" }",,tectix-qa category-admin-panel priority-p1,High
+ADMIN-004,,,,Use existing username,,HTTP 409 or 400; error response; no duplicate created,,
+ADMIN-005,Generic,[ADMIN-005] Create user with missing required fields fails,Admin authenticated,POST /api/admin/users,"{ ""username"": ""incomplete"" }",,tectix-qa category-admin-panel priority-p1,High
+ADMIN-005,,,,Omit password,,HTTP 400 or 422; user not created,,
+ADMIN-006,Generic,[ADMIN-006] Admin deletes a user,Admin authenticated; target user exists,DELETE /api/admin/users/<username>,username=tobedeleted,HTTP 200; user no longer in GET /api/admin/users; deleted user cannot login,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-007,Generic,[ADMIN-007] Delete non-existent user returns 404,Admin authenticated,DELETE /api/admin/users/doesnotexist,username=doesnotexist,HTTP 404,tectix-qa category-admin-panel priority-p1,High
+ADMIN-008,Generic,[ADMIN-008] Admin cannot delete themselves,Admin authenticated,DELETE /api/admin/users/<own_username>,Own admin username,HTTP 400 or 403; admin account preserved,tectix-qa category-admin-panel priority-p1,High
+ADMIN-009,Generic,[ADMIN-009] Admin can list portfolio systems,Admin authenticated,GET /api/admin/systems,None,HTTP 200; JSON array of systems (may be empty),tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-010,Generic,[ADMIN-010] Admin adds system to portfolio,Admin authenticated,POST /api/admin/systems,"{ ""system_id"": 12345, ""system_name"": ""Test System"" }",,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-010,,,,Provide system_id (integer) and optional name,,HTTP 200 or 201; system appears in GET /api/admin/systems,,
+ADMIN-011,Generic,[ADMIN-011] Add system with duplicate system_id,Admin authenticated; system already exists,POST /api/admin/systems with existing system_id,"{ ""system_id"": 12345 }",HTTP 409 or 400; duplicate rejected,tectix-qa category-admin-panel priority-p1,High
+ADMIN-012,Generic,[ADMIN-012] Admin uploads CSV for a system,Admin authenticated; system exists in portfolio,POST /api/admin/systems/<system_id>/csv,system_id=<id>; CSV file,,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-012,,,,Upload CSV file (multipart),,HTTP 200; CSV path stored; visible in system record,,
+ADMIN-013,Generic,[ADMIN-013] Admin updates (unsets) CSV path for a system,Admin authenticated; system with CSV,PATCH /api/admin/systems/<system_id>/csv,system_id=<id>,HTTP 200; CSV path cleared/updated,tectix-qa category-admin-panel priority-p1,High
+ADMIN-014,Generic,[ADMIN-014] Admin deletes system from portfolio,Admin authenticated; system exists,DELETE /api/admin/systems/<system_id>,system_id=<id>,HTTP 200; system no longer in GET /api/admin/systems,tectix-qa category-admin-panel priority-p0,Highest
+ADMIN-015,Generic,[ADMIN-015] Delete non-existent system returns 404,Admin authenticated,DELETE /api/admin/systems/99999,system_id=99999,HTTP 404,tectix-qa category-admin-panel priority-p1,High
+ADMIN-016,Generic,[ADMIN-016] Non-admin cannot manage systems,Regular user authenticated,GET /api/admin/systems,None,HTTP 403,tectix-qa category-admin-panel priority-p1,High
+ADMIN-017,Generic,[ADMIN-017] Admin can retrieve log info,Admin authenticated,GET /api/admin/logs/info,None,"HTTP 200; JSON with log file info (size, path, etc.)",tectix-qa category-admin-panel priority-p1,High
+ADMIN-018,Generic,[ADMIN-018] Admin can tail log file,Admin authenticated,GET /api/admin/logs/tail,Optional: ?lines=50,HTTP 200; JSON with array of recent log lines,tectix-qa category-admin-panel priority-p1,High
+ADMIN-019,Generic,[ADMIN-019] Admin can search logs,Admin authenticated,POST /api/admin/logs/search,"{ ""query"": ""LOGIN"" }",,tectix-qa category-admin-panel priority-p1,High
+ADMIN-019,,,,Provide search query,,HTTP 200; JSON with matching log lines,,
+ADMIN-020,Generic,[ADMIN-020] Admin can download log file,Admin authenticated,GET /api/admin/logs/download,None,HTTP 200; file download response; Content-Disposition header set,tectix-qa category-admin-panel priority-p2,Medium
+ADMIN-021,Generic,[ADMIN-021] Non-admin cannot access logs,Regular user authenticated,GET /api/admin/logs/info,None,HTTP 403,tectix-qa category-admin-panel priority-p1,High
+POL-001,Generic,[POL-001] Admin lists all scan policies,Admin authenticated,GET /api/policies,None,HTTP 200; JSON array of policies (may be empty),tectix-qa category-scan-policies priority-p0,Highest
+POL-002,Generic,[POL-002] Admin creates daily scan policy,Admin authenticated,POST /api/policies,"{ ""name"": ""Daily Scan"", ""frequency"": ""DAILY"", ""time_of_day"": ""02:00"", ""enabled"": true }",,tectix-qa category-scan-policies priority-p0,Highest
+POL-002,,,,Set frequency=DAILY,,HTTP 200 or 201; policy created with id; visible in GET /api/policies,,
+POL-003,Generic,[POL-003] Admin creates weekly scan policy,Admin authenticated,POST /api/policies,"{ ""name"": ""Weekly Scan"", ""frequency"": ""WEEKLY"", ""day_of_week"": ""Monday"" }",,tectix-qa category-scan-policies priority-p0,Highest
+POL-003,,,,Set frequency=WEEKLY with day_of_week,,HTTP 200 or 201; policy created,,
+POL-004,Generic,[POL-004] Create policy with invalid frequency,Admin authenticated,POST /api/policies,"{ ""name"": ""Bad"", ""frequency"": ""HOURLY"" }",,tectix-qa category-scan-policies priority-p1,High
+POL-004,,,,Use unsupported frequency value,,HTTP 400 or 422; valid frequencies: DAILY/WEEKLY/BIWEEKLY/MONTHLY only,,
+POL-005,Generic,[POL-005] Admin updates existing scan policy,Admin authenticated; policy exists,PUT /api/policies/<policy_id>,"{ ""name"": ""Updated Name"", ""enabled"": false }",,tectix-qa category-scan-policies priority-p1,High
+POL-005,,,,Change name and enabled state,,HTTP 200; policy updated in GET /api/policies,,
+POL-006,Generic,[POL-006] Admin deletes scan policy,Admin authenticated; policy exists,DELETE /api/policies/<policy_id>,policy_id=<id>,HTTP 200; policy no longer in GET /api/policies,tectix-qa category-scan-policies priority-p0,Highest
+POL-007,Generic,[POL-007] Enroll systems in scan policy,Admin authenticated; policy and systems exist,POST /api/policies/<policy_id>/systems,"{ ""system_ids"": [1, 2, 3] }",,tectix-qa category-scan-policies priority-p0,Highest
+POL-007,,,,Provide array of system IDs,,HTTP 200 or 201; systems enrolled; visible in policy details,,
+POL-008,Generic,[POL-008] Remove systems from scan policy,Admin authenticated; systems enrolled in policy,DELETE /api/policies/<policy_id>/systems,"{ ""system_ids"": [1] }",,tectix-qa category-scan-policies priority-p1,High
+POL-008,,,,Provide array of system IDs to remove,,HTTP 200; systems no longer enrolled in policy,,
+POL-009,Generic,[POL-009] Manually trigger policy run,Admin authenticated; policy with enrolled systems,POST /api/policies/<policy_id>/run,policy_id=<id>,HTTP 200 or 202; scan triggered for enrolled systems,tectix-qa category-scan-policies priority-p1,High
+POL-010,Generic,[POL-010] Non-admin cannot manage policies,Regular user authenticated,GET /api/policies,None,HTTP 403,tectix-qa category-scan-policies priority-p1,High
+MON-001,Generic,[MON-001] Retrieve monitored systems status,Admin authenticated; systems enrolled in policies,GET /api/monitoring/continuous,None,"HTTP 200; JSON with array of monitored systems; each has system_id, readiness_score, pass/fail/concern counts",tectix-qa category-continuous-monitoring priority-p0,Highest
+MON-002,Generic,[MON-002] Monitoring returns empty array when no systems enrolled,Admin authenticated; no systems in portfolio,GET /api/monitoring/continuous,None,HTTP 200; JSON: [] or { systems: [] },tectix-qa category-continuous-monitoring priority-p1,High
+MON-003,Generic,[MON-003] Non-admin cannot view monitoring dashboard,Regular user authenticated,GET /api/monitoring/continuous,None,HTTP 403,tectix-qa category-continuous-monitoring priority-p1,High
+MON-004,Manual,[MON-004] Readiness score reflects test results accurately,System with completed scan,Complete a scan for a system,System with known pass/fail ratio,,tectix-qa category-continuous-monitoring priority-p2,Medium
+MON-004,,,,GET /api/monitoring/continuous,,,,
+MON-004,,,,Check readiness_score,,Readiness score = (PASS count / total tests) * 100; validates against known scan data,,
+EMASS-001,Manual,[EMASS-001] Test eMASS connectivity with valid credentials,Admin authenticated; eMASS config set,POST /api/admin/test_emass (GET also supported),Valid eMASS creds in config,HTTP 200; JSON shows connection result,tectix-qa category-emass-integration priority-p1,High
+EMASS-002,Manual,[EMASS-002] Test eMASS connectivity with invalid credentials,Admin authenticated; wrong eMASS creds,POST /api/admin/test_emass,Invalid eMASS creds,HTTP 200 with error or HTTP 4xx; connection failure reported (not 500),tectix-qa category-emass-integration priority-p1,High
+EMASS-003,Manual,[EMASS-003] Sync data from eMASS,Admin authenticated; valid eMASS connection,POST /api/admin/update_emass,Valid eMASS configuration,HTTP 200; systems synced from eMASS,tectix-qa category-emass-integration priority-p2,Medium
+EMASS-004,Generic,[EMASS-004] Non-admin cannot manage eMASS connection,Regular user authenticated,POST /api/admin/test_emass,Any,HTTP 403,tectix-qa category-emass-integration priority-p1,High
+SEC-001,Generic,[SEC-001] Protected endpoints require authentication,No session,Access each protected endpoint without login,No session,,tectix-qa category-security priority-p0,Highest
+SEC-001,,,,"Test endpoints: /process, /api/admin/users, /api/policies, /api/account/password",,All protected endpoints return HTTP 401 or redirect; not accessible without valid session,,
+SEC-002,Generic,[SEC-002] Admin endpoints reject regular users,Regular user authenticated,Login as regular user,Regular user session,,tectix-qa category-security priority-p0,Highest
+SEC-002,,,,"Attempt admin-only endpoints: GET /api/admin/users, /api/admin/systems, /api/policies",,All admin endpoints return HTTP 403,,
+SEC-003,Generic,[SEC-003] System ID field rejects SQL injection,User authenticated,POST /process with SQL injection in system_id field,"system_id="" OR 1=1 --",HTTP 400; isdigit() check blocks non-numeric; no SQL executed,tectix-qa category-security priority-p1,High
+SEC-004,Generic,[SEC-004] File upload rejects non-CSV files,User authenticated,"POST /process with .exe, .php, .js, .xlsx files","data_file=malicious.exe (or .php, etc.)",HTTP 400; error: 'Only CSV files are supported.',tectix-qa category-security priority-p1,High
+SEC-005,Manual,[SEC-005] Passwords are hashed in database,Direct DB access for verification,Create user,Username/password pair,,tectix-qa category-security priority-p1,High
+SEC-005,,,,Inspect database users table,,,,
+SEC-005,,,,Check password_hash field,,password_hash field is NOT the plaintext password; length > 40 chars; bcrypt/scrypt format,,
+SEC-006,Manual,[SEC-006] Session cookie has secure attributes,HTTPS environment,Login and capture Set-Cookie header,Login request over HTTPS,,tectix-qa category-security priority-p1,High
+SEC-006,,,,Inspect cookie flags,,Cookie has HttpOnly flag; SameSite attribute set; Secure flag if HTTPS,,
+SEC-007,Generic,[SEC-007] Rate limiting is IP-based not user-based,Different usernames same IP,Send 11+ login attempts from same IP using different usernames,Multiple usernames from same IP,,tectix-qa category-security priority-p1,High
+SEC-007,,,,Confirm 429 after limit exceeded,,HTTP 429 triggered based on IP regardless of username used,,
+SEC-008,Manual,[SEC-008] Login response times are consistent,App running,Login with valid user + wrong password (time it),Mix of valid/invalid users,,tectix-qa category-security priority-p2,Medium
+SEC-008,,,,Login with invalid user + any password (time it),,,,
+SEC-008,,,,Compare timings (run 5x each),,Response times within ~50ms of each other; _auth_sleep normalizes timing,,
+PERF-001,Manual,[PERF-001] Single system scan completes in reasonable time,System with CSV ready,POST /process with valid system + CSV,system_id=12345; typical CSV file,,tectix-qa category-performance priority-p2,Medium
+PERF-001,,,,Poll status until completed,,,,
+PERF-001,,,,Record elapsed time,,Scan completes within 120 seconds for a typical CSV,,
+PERF-002,Manual,[PERF-002] API endpoints respond within acceptable time,App running under normal load,Run GET /api/session 50 times,Authenticated session,,tectix-qa category-performance priority-p2,Medium
+PERF-002,,,,Record min/max/avg response time,,Average response time < 200ms; no timeouts,,
+PERF-003,Manual,[PERF-003] Multiple concurrent scans do not cause errors,Multiple users authenticated,Submit 3 simultaneous scans (one per user),3 different system CSVs,,tectix-qa category-performance priority-p3,Low
+PERF-003,,,,Monitor for errors or data cross-contamination,,All 3 scans complete successfully; each user sees only their own results; no job cross-contamination,,
+UI-001,Manual,[UI-001] Login form renders correctly,App running,Open app URL in browser,Chrome/Firefox,,tectix-qa category-frontend priority-p0,Highest
+UI-001,,,,Observe login page,,Username and password fields visible; Login button present; no JS console errors,,
+UI-002,Manual,[UI-002] Successful login redirects to dashboard,App running; valid credentials,Enter valid username/password,testadmin / TestPass123!,,tectix-qa category-frontend priority-p0,Highest
+UI-002,,,,Click Login,,Redirected to dashboard; TopNav shows username; no error messages,,
+UI-003,Manual,[UI-003] Dashboard loads and shows scan interface,User authenticated,Login and navigate to dashboard,Valid session,System ID input visible; File upload button present; no broken UI elements,tectix-qa category-frontend priority-p0,Highest
+UI-004,Manual,[UI-004] Upload CSV and submit scan shows spinner,User authenticated; CSV file ready,Enter numeric system ID,system_id=12345; test.csv,,tectix-qa category-frontend priority-p0,Highest
+UI-004,,,,Upload CSV file,,,,
+UI-004,,,,Click submit/process,,Processing spinner / loading indicator appears; status updates stream in,,
+UI-005,Manual,[UI-005] Scan results display in test table,Scan completed,Complete a scan,Completed job,,tectix-qa category-frontend priority-p0,Highest
+UI-005,,,,Observe results panel,,"TestTable component shows rows; PASS in green, FAIL in red, CONCERN in yellow, NA in grey; readiness gauge shows score",,
+UI-006,Manual,[UI-006] Admin panel accessible only to admin users,Admin user authenticated,Login as admin,Admin session,,tectix-qa category-frontend priority-p0,Highest
+UI-006,,,,Navigate to Admin Panel,,"Admin Panel loads with sidebar: Users, Portfolio, Policies, Logs, eMASS, About",,
+UI-007,Manual,[UI-007] Regular user does not see admin panel link,Regular user authenticated,Login as regular user,User session,,tectix-qa category-frontend priority-p1,High
+UI-007,,,,Check TopNav,,No Admin Panel link/button visible in navigation,,
+UI-008,Manual,[UI-008] User can change password from Account page,User authenticated,Navigate to Account page,Valid password change data,,tectix-qa category-frontend priority-p1,High
+UI-008,,,,Fill in current and new password,,,,
+UI-008,,,,Submit,,Success message shown; can login with new password,,
+UI-009,Manual,[UI-009] 2FA enrollment modal shows QR code,User without 2FA authenticated,Navigate to Account page,No existing 2FA,,tectix-qa category-frontend priority-p1,High
+UI-009,,,,Click Enable 2FA,,Modal appears with QR code and manual entry code; instructions shown,,
+UI-010,Manual,[UI-010] Session expired prompt appears on timeout,User with active session,Leave app idle until session expires,Session timeout value,,tectix-qa category-frontend priority-p1,High
+UI-010,,,,Try to interact with app,,SessionExpiredPrompt component appears; user prompted to log back in,,
+UI-011,Manual,[UI-011] Classification banner displays on all pages,App running,Open any page of the app,None,ClassificationBanner component visible at top and/or bottom of page,tectix-qa category-frontend priority-p2,Medium
+UI-012,Manual,[UI-012] Reporting page shows past scan results,User with completed scans,Navigate to Reporting page,User with job history,,tectix-qa category-frontend priority-p1,High
+UI-012,,,,Look for historical jobs,,Previous scans listed; can view JSON results; download button works,,
+UI-013,Manual,[UI-013] Monitoring page shows enrolled systems,Admin with enrolled systems,Login as admin,Systems enrolled in policies,,tectix-qa category-frontend priority-p1,High
+UI-013,,,,Navigate to Continuous Monitoring,,MonitoringGauge and ComplianceTimeChart visible; system cards show readiness scores,,
+INT-001,Manual,[INT-001] Full scan workflow: login > upload CSV > scan > download,Fresh session,Login as user,testadmin; system_id=12345; valid CSV,,tectix-qa category-integration priority-p0,Highest
+INT-001,,,,Upload CSV via Dashboard,,,,
+INT-001,,,,Submit scan with numeric system ID,,,,
+INT-001,,,,Wait for completion,,,,
+INT-001,,,,Download Excel checklist,,All steps succeed; downloaded file is valid Excel; contains test results,,
+INT-002,Manual,[INT-002] Admin workflow: create user > login as new user > scan > view results,Fresh admin session,Admin creates new user,New user credentials; valid CSV,,tectix-qa category-integration priority-p0,Highest
+INT-002,,,,Logout,,,,
+INT-002,,,,Login as new user,,,,
+INT-002,,,,Submit scan,,,,
+INT-002,,,,View results,,New user can login and complete a scan; admin can see no cross-data contamination,,
+INT-003,Manual,[INT-003] Policy automation: create policy > add system > trigger run > check monitoring,Admin session,Create scan policy (DAILY),Valid system and CSV,,tectix-qa category-integration priority-p1,High
+INT-003,,,,Add system to portfolio,,,,
+INT-003,,,,Enroll system in policy,,,,
+INT-003,,,,Trigger policy run manually (POST /api/policies/<id>/run),,,,
+INT-003,,,,Check GET /api/monitoring/continuous,,Policy runs; monitoring page reflects updated scan results,,
+INT-004,Generic,[INT-004] Recovery from failed scan (bad CSV),User authenticated,Upload CSV with corrupted/empty content,Empty or malformed CSV,,tectix-qa category-integration priority-p2,Medium
+INT-004,,,,Submit scan,,,,
+INT-004,,,,Check status,,System handles gracefully; no 500 error; meaningful error message returned,,

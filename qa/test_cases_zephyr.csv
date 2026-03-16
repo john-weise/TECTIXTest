@@ -1,0 +1,298 @@
+Name,Objective,Precondition,Folder,Status,Priority,Labels,Step,Expected Result,Test Data
+[AUTH-001] Login with valid credentials (no 2FA),"[AUTH-001] Login with valid credentials (no 2FA)
+
+Notes: Timing normalized by _auth_sleep",App running; user without 2FA exists,Tectix QA/Authentication/Login,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login,,"{ ""username"": ""testadmin"", ""password"": ""TestPass123!"" }"
+,,,,,,,Send JSON body,,
+,,,,,,,Check response,"HTTP 200; JSON: { success: true, user: 'testadmin', two_factor_required: false }; session cookie set",
+[AUTH-002] Login with wrong password,"[AUTH-002] Login with wrong password
+
+Notes: Generic error - must not reveal if user exists",App running; valid user exists,Tectix QA/Authentication/Login,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login,,"{ ""username"": ""testadmin"", ""password"": ""WrongPass"" }"
+,,,,,,,Send invalid password,"HTTP 401; JSON: { success: false, error: 'Invalid credentials' }",
+[AUTH-003] Login with non-existent username,"[AUTH-003] Login with non-existent username
+
+Notes: Critical: error must NOT say 'user not found'",App running,Tectix QA/Authentication/Login,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login,,"{ ""username"": ""nobody"", ""password"": ""anything"" }"
+,,,,,,,Use unknown username,"HTTP 401; JSON: { success: false, error: 'Invalid credentials' } - same response as wrong password (no enumeration)",
+[AUTH-004] Login triggers 2FA challenge,"[AUTH-004] Login triggers 2FA challenge
+
+Notes: Session must only have pending_user not user",App running; user WITH 2FA enrolled,Tectix QA/Authentication/Login,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login,,"{ ""username"": ""2fauser"", ""password"": ""TestPass123!"" }"
+,,,,,,,Use valid credentials for 2FA user,"HTTP 200; JSON: { success: false, two_factor_required: true, user: null }; pending session set (NOT full session)",
+[AUTH-005] Login with invalid JSON format,"[AUTH-005] Login with invalid JSON format
+
+Notes: Pydantic validation",App running,Tectix QA/Authentication/Login,Draft,High,"tectix-qa, Automatable, P1",POST /api/login,,"{ ""username"": """" } (missing password)"
+,,,,,,,Send malformed payload,"HTTP 400; JSON: { success: false, error: 'Invalid username/password format' }",
+[AUTH-006] Rate limit blocks excess login attempts,"[AUTH-006] Rate limit blocks excess login attempts
+
+Notes: _RATE_LIMIT threshold; check IP-based not user-based",App running,Tectix QA/Authentication/Login,Draft,High,"tectix-qa, Automatable, P1",POST /api/login 11+ times in quick succession,,"{ ""username"": ""any"", ""password"": ""any"" } x11+"
+,,,,,,,Use any credentials,"HTTP 429 on 11th+ attempt; JSON: { success: false, error: 'Too many login attempts...' }",
+[AUTH-007] Login with empty body,[AUTH-007] Login with empty body,App running,Tectix QA/Authentication/Login,Draft,High,"tectix-qa, Automatable, P1",POST /api/login,,{}
+,,,,,,,Send empty JSON {},HTTP 400; validation error response,
+[AUTH-008] Login response does not reveal timing difference,"[AUTH-008] Login response does not reveal timing difference
+
+Notes: Manual timing test; prevents username enumeration",App running,Tectix QA/Authentication/Login,Draft,Medium,"tectix-qa, Manual-Only, P2",POST /api/login with valid user/wrong pass - record time,,Valid user + wrong pass; Invalid user + any pass
+,,,,,,,POST /api/login with invalid user/any pass - record time,,
+,,,,,,,Compare response times,Response times should be roughly equal (within ~50ms) - _auth_sleep normalizes timing,
+[AUTH-009] Session check returns authenticated state,[AUTH-009] Session check returns authenticated state,User logged in,Tectix QA/Authentication/Session,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login to authenticate,,Valid credentials
+,,,,,,,GET /api/session,"HTTP 200; JSON: { authenticated: true, user: 'testadmin', is_admin: true/false }",
+[AUTH-010] Session check returns unauthenticated when not logged in,"[AUTH-010] Session check returns unauthenticated when not logged in
+
+Notes: Returns 200 not 401",No session,Tectix QA/Authentication/Session,Draft,Highest,"tectix-qa, Automatable, P0",GET /api/session (no login first),HTTP 200; JSON: { authenticated: false },None
+[AUTH-011] Session check returns show_welcome flag for new admin,[AUTH-011] Session check returns show_welcome flag for new admin,First login as default admin,Tectix QA/Authentication/Session,Draft,High,"tectix-qa, Automatable, P1",Login as default admin,,Default admin credentials
+,,,,,,,GET /api/session,"JSON includes: { show_welcome: true, is_default_admin: true, needs_password_reset: true }",
+[AUTH-012] Stale session (wrong server_run_id) is cleared,"[AUTH-012] Stale session (wrong server_run_id) is cleared
+
+Notes: Manual test with custom session",Old session cookie from previous server run,Tectix QA/Authentication/Session,Draft,High,"tectix-qa, Manual-Only, P1",Inject session with old server_run_id,,Session cookie with mismatched server_run_id
+,,,,,,,GET /api/session,HTTP 200; JSON: { authenticated: false }; old session cleared,
+[AUTH-013] Logout clears session,[AUTH-013] Logout clears session,User logged in,Tectix QA/Authentication/Logout,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login,,Valid credentials
+,,,,,,,Confirm GET /api/session returns authenticated: true,,
+,,,,,,,POST /api/logout,,
+,,,,,,,GET /api/session,POST /api/logout returns HTTP 200; subsequent GET /api/session returns authenticated: false,
+[AUTH-014] Logout on unauthenticated session does not error,[AUTH-014] Logout on unauthenticated session does not error,No session,Tectix QA/Authentication/Logout,Draft,High,"tectix-qa, Automatable, P1",POST /api/logout without logging in,HTTP 200 or 401 - no server error (no 500),None
+[2FA-001] 2FA status returns not enrolled for new user,[2FA-001] 2FA status returns not enrolled for new user,User logged in; 2FA not set up,Tectix QA/Two-Factor Auth/Status,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login (no-2FA user),,Valid credentials
+,,,,,,,GET /api/account/2fa/status,HTTP 200; JSON: { enrolled: false },
+[2FA-002] Start 2FA enrollment returns QR code and secret,[2FA-002] Start 2FA enrollment returns QR code and secret,User logged in; 2FA not enrolled,Tectix QA/Two-Factor Auth/Enrollment,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login,,Valid credentials
+,,,,,,,POST /api/account/2fa/start,"HTTP 200; JSON includes: { qr_code: '<data URI>', secret: '<base32 string>' }",
+[2FA-003] Confirm 2FA with valid TOTP code,"[2FA-003] Confirm 2FA with valid TOTP code
+
+Notes: Requires pyotp to generate code",User in enrollment flow (secret from /start),Tectix QA/Two-Factor Auth/Enrollment,Draft,Highest,"tectix-qa, Manual-Only, P0",POST /api/account/2fa/start,,"{ ""code"": ""<valid TOTP>"" }"
+,,,,,,,Generate TOTP from returned secret,,
+,,,,,,,POST /api/account/2fa/confirm with code,HTTP 200; 2FA enrolled; JSON includes recovery_codes array,
+[2FA-004] Confirm 2FA with invalid TOTP code,[2FA-004] Confirm 2FA with invalid TOTP code,User in enrollment flow,Tectix QA/Two-Factor Auth/Enrollment,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/2fa/start,,"{ ""code"": ""000000"" }"
+,,,,,,,POST /api/account/2fa/confirm with wrong code,HTTP 400 or 401; enrollment not completed,
+[2FA-005] Complete 2FA login with valid TOTP,[2FA-005] Complete 2FA login with valid TOTP,User with 2FA enrolled; pending session active,Tectix QA/Two-Factor Auth/Login,Draft,Highest,"tectix-qa, Manual-Only, P0",POST /api/login → two_factor_required: true,,"{ ""code"": ""<valid TOTP>"" }"
+,,,,,,,Generate TOTP from enrolled secret,,
+,,,,,,,POST /api/login/2fa with valid code,"HTTP 200; full session established; JSON: { success: true, user: '...' }",
+[2FA-006] 2FA login with invalid code is rejected,[2FA-006] 2FA login with invalid code is rejected,Pending 2FA session active,Tectix QA/Two-Factor Auth/Login,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/login with 2FA user,,"{ ""code"": ""123456"" }"
+,,,,,,,POST /api/login/2fa with wrong code,HTTP 401; session remains pending (not fully authenticated),
+[2FA-007] 2FA login with expired pending session,"[2FA-007] 2FA login with expired pending session
+
+Notes: Manual timing test; check pending_2fa_created_at expiry",More than timeout since /api/login,Tectix QA/Two-Factor Auth/Login,Draft,High,"tectix-qa, Manual-Only, P1",POST /api/login (2FA user),,"{ ""code"": ""<valid TOTP>"" }"
+,,,,,,,Wait for pending session timeout,,
+,,,,,,,POST /api/login/2fa,HTTP 401; pending session expired error,
+[2FA-008] Disable 2FA with valid current password,[2FA-008] Disable 2FA with valid current password,User with 2FA enrolled and logged in,Tectix QA/Two-Factor Auth/Disable,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/2fa/disable,,"{ ""password"": ""TestPass123!"" }"
+,,,,,,,Provide current password,HTTP 200; 2FA disabled; subsequent GET /api/account/2fa/status returns enrolled: false,
+[2FA-009] Disable 2FA with wrong password is rejected,[2FA-009] Disable 2FA with wrong password is rejected,User with 2FA enrolled and logged in,Tectix QA/Two-Factor Auth/Disable,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/2fa/disable with wrong password,HTTP 400 or 401; 2FA remains enabled,"{ ""password"": ""WrongPass"" }"
+[2FA-010] Regenerate recovery codes,[2FA-010] Regenerate recovery codes,User with 2FA enrolled and logged in,Tectix QA/Two-Factor Auth/Recovery,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/2fa/recovery/regenerate,HTTP 200; new recovery_codes array returned; old codes invalidated,None
+[2FA-011] Admin can disable user's 2FA,[2FA-011] Admin can disable user's 2FA,Admin logged in; target user has 2FA,Tectix QA/Two-Factor Auth/Admin,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/users/<username>/2fa/disable,HTTP 200; target user's 2FA disabled; user's 2FA status becomes enrolled: false,None (or admin confirmation)
+[2FA-012] Non-admin cannot disable another user's 2FA,[2FA-012] Non-admin cannot disable another user's 2FA,Regular user logged in,Tectix QA/Two-Factor Auth/Admin,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/users/<username>/2fa/disable,HTTP 403; 2FA unchanged,None
+[SCAN-001] Submit valid system scan (form-data with numeric ID and CSV),"[SCAN-001] Submit valid system scan (form-data with numeric ID and CSV)
+
+Notes: Note: form-data NOT JSON; system_id must be numeric",User authenticated; valid CSV ready,Tectix QA/Scan Processing/Submit,Draft,Highest,"tectix-qa, Automatable, P0",POST /process (multipart/form-data),,system_id=12345; data_file=test.csv
+,,,,,,,Include system_id (numeric) and CSV file,"HTTP 202; JSON: { success: true, job_id: '<token>' }; background worker started",
+[SCAN-002] Submit scan with non-numeric system ID is rejected,[SCAN-002] Submit scan with non-numeric system ID is rejected,User authenticated,Tectix QA/Scan Processing/Submit,Draft,Highest,"tectix-qa, Automatable, P0",POST /process,,system_id='ABC123'; data_file=test.csv
+,,,,,,,Use non-numeric system_id,HTTP 400; JSON: { error: 'System ID must be numeric.' },
+[SCAN-003] Submit scan without CSV file is rejected,[SCAN-003] Submit scan without CSV file is rejected,User authenticated,Tectix QA/Scan Processing/Submit,Draft,Highest,"tectix-qa, Automatable, P0",POST /process,,system_id=12345 (no file)
+,,,,,,,Omit data_file field,HTTP 400; JSON: { error: 'data file upload is required.' },
+[SCAN-004] Submit scan with non-CSV file is rejected,[SCAN-004] Submit scan with non-CSV file is rejected,User authenticated,Tectix QA/Scan Processing/Submit,Draft,Highest,"tectix-qa, Automatable, P0",POST /process,,system_id=12345; data_file=test.xlsx
+,,,,,,,Upload non-CSV file,HTTP 400; JSON: { error: 'Only CSV files are supported.' },
+[SCAN-005] Unauthenticated scan request is rejected,[SCAN-005] Unauthenticated scan request is rejected,No session,Tectix QA/Scan Processing/Submit,Draft,Highest,"tectix-qa, Automatable, P0",POST /process (no login),HTTP 401 or redirect to login,system_id=12345; data_file=test.csv
+[SCAN-006] Job status returns processing state,[SCAN-006] Job status returns processing state,Scan submitted; job not yet complete,Tectix QA/Scan Processing/Status,Draft,Highest,"tectix-qa, Automatable, P0",POST /process → get job_id,,job_id from SCAN-001
+,,,,,,,GET /status/<job_id> quickly after,HTTP 200; JSON includes status field (processing/complete),
+[SCAN-007] Job status returns completed state,[SCAN-007] Job status returns completed state,Scan submitted and completed,Tectix QA/Scan Processing/Status,Draft,Highest,"tectix-qa, Automatable, P0",POST /process → get job_id,,job_id from SCAN-001
+,,,,,,,Poll GET /status/<job_id> until complete,"HTTP 200; JSON: { status: 'completed', ... }",
+[SCAN-008] Job status for unknown job_id,[SCAN-008] Job status for unknown job_id,Valid session; random job_id,Tectix QA/Scan Processing/Status,Draft,High,"tectix-qa, Automatable, P1",GET /status/nonexistent-job-id,HTTP 404 or JSON with not_found status,job_id='fakeid123'
+[SCAN-009] User cannot access another user's job,"[SCAN-009] User cannot access another user's job
+
+Notes: Job isolation by owner",Two users; one has a job,Tectix QA/Scan Processing/Status,Draft,High,"tectix-qa, Automatable, P1",Login as user A; submit scan; get job_id,,job_id belonging to user A
+,,,,,,,Login as user B,,
+,,,,,,,GET /status/<user_A_job_id>,HTTP 404 or 403; user B cannot see user A's job,
+[SCAN-010] SSE stream delivers output lines,"[SCAN-010] SSE stream delivers output lines
+
+Notes: Manual test with browser EventSource or curl --no-buffer",Scan in progress,Tectix QA/Scan Processing/Streaming,Draft,High,"tectix-qa, Manual-Only, P1",POST /process → get job_id,,job_id from active scan
+,,,,,,,GET /stream_output/<job_id>,,
+,,,,,,,Listen for SSE events,HTTP 200; Content-Type: text/event-stream; data lines appear progressively,
+[SCAN-011] Retrieve JSON results for completed scan,[SCAN-011] Retrieve JSON results for completed scan,Scan completed,Tectix QA/Scan Processing/Results,Draft,Highest,"tectix-qa, Automatable, P0",POST /process; wait for completion,,job_id from completed scan
+,,,,,,,GET /reporting_json/<job_id>,"HTTP 200; JSON with test_results array; each result has test number, result (PASS/FAIL/CONCERN/NA), message",
+[SCAN-012] Download Excel checklist for completed scan,[SCAN-012] Download Excel checklist for completed scan,Scan completed,Tectix QA/Scan Processing/Results,Draft,Highest,"tectix-qa, Automatable, P0",GET /download?job_id=<job_id>,HTTP 200; Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; file download,job_id from completed scan
+[SCAN-013] Download before scan complete returns appropriate error,[SCAN-013] Download before scan complete returns appropriate error,Scan in progress,Tectix QA/Scan Processing/Results,Draft,High,"tectix-qa, Automatable, P1",POST /process → get job_id,,job_id from new scan
+,,,,,,,Immediately GET /download?job_id=<job_id>,HTTP 404 or 400; not a server error,
+[ACCT-001] Change password with correct current password,[ACCT-001] Change password with correct current password,User authenticated,Tectix QA/Account/Password,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/account/password,,"{ ""current_password"": ""TestPass123!"", ""new_password"": ""NewPass456!"" }"
+,,,,,,,Provide current and new password,HTTP 200; JSON: { success: true }; can now login with new password,
+[ACCT-002] Change password with wrong current password,[ACCT-002] Change password with wrong current password,User authenticated,Tectix QA/Account/Password,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/account/password,,"{ ""current_password"": ""WrongPass"", ""new_password"": ""NewPass456!"" }"
+,,,,,,,Provide wrong current password,"HTTP 400; JSON: { success: false, error: 'password change failed' }; password unchanged",
+[ACCT-003] Change password too short (less than 8 chars),"[ACCT-003] Change password too short (less than 8 chars)
+
+Notes: Minimum 8 chars enforced",User authenticated,Tectix QA/Account/Password,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/account/password,,"{ ""current_password"": ""TestPass123!"", ""new_password"": ""short"" }"
+,,,,,,,Provide new password under 8 chars,"HTTP 400; JSON: { success: false, error: 'password too short' }",
+[ACCT-004] Change password with missing fields,[ACCT-004] Change password with missing fields,User authenticated,Tectix QA/Account/Password,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/password,,"{ ""new_password"": ""NewPass456!"" } (no current_password)"
+,,,,,,,Omit current_password or new_password,"HTTP 400; JSON: { success: false, error: 'current_password and new_password required' }",
+[ACCT-005] User cannot change another user's password via this endpoint,"[ACCT-005] User cannot change another user's password via this endpoint
+
+Notes: username field checked against session user",User A authenticated,Tectix QA/Account/Password,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/password,,"{ ""username"": ""otheruser"", ""current_password"": ""..."", ""new_password"": ""..."" }"
+,,,,,,,Include username field pointing to another user,"HTTP 403; JSON: { success: false, error: 'forbidden' }; logs security warning",
+[ACCT-006] Unauthenticated password change is rejected,[ACCT-006] Unauthenticated password change is rejected,No session,Tectix QA/Account/Password,Draft,High,"tectix-qa, Automatable, P1",POST /api/account/password (no login),HTTP 401,Any body
+[ADMIN-001] Admin can list all users,[ADMIN-001] Admin can list all users,Admin authenticated,Tectix QA/Admin Panel/User Management,Draft,Highest,"tectix-qa, Automatable, P0",GET /api/admin/users,HTTP 200; JSON array with user objects; includes testadmin and testuser,None
+[ADMIN-002] Non-admin cannot list users,[ADMIN-002] Non-admin cannot list users,Regular user authenticated,Tectix QA/Admin Panel/User Management,Draft,Highest,"tectix-qa, Automatable, P0",GET /api/admin/users,HTTP 403,None
+[ADMIN-003] Admin creates new user,[ADMIN-003] Admin creates new user,Admin authenticated,Tectix QA/Admin Panel/User Management,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/admin/users,,"{ ""username"": ""newuser"", ""password"": ""Pass123!"", ""role"": ""user"" }"
+,,,,,,,Provide username + password + role,HTTP 200 or 201; user created; visible in GET /api/admin/users,
+[ADMIN-004] Create user with duplicate username fails,[ADMIN-004] Create user with duplicate username fails,Admin authenticated; user already exists,Tectix QA/Admin Panel/User Management,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/users,,"{ ""username"": ""testadmin"", ""password"": ""Pass123!"", ""role"": ""user"" }"
+,,,,,,,Use existing username,HTTP 409 or 400; error response; no duplicate created,
+[ADMIN-005] Create user with missing required fields fails,[ADMIN-005] Create user with missing required fields fails,Admin authenticated,Tectix QA/Admin Panel/User Management,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/users,,"{ ""username"": ""incomplete"" }"
+,,,,,,,Omit password,HTTP 400 or 422; user not created,
+[ADMIN-006] Admin deletes a user,[ADMIN-006] Admin deletes a user,Admin authenticated; target user exists,Tectix QA/Admin Panel/User Management,Draft,Highest,"tectix-qa, Automatable, P0",DELETE /api/admin/users/<username>,HTTP 200; user no longer in GET /api/admin/users; deleted user cannot login,username=tobedeleted
+[ADMIN-007] Delete non-existent user returns 404,[ADMIN-007] Delete non-existent user returns 404,Admin authenticated,Tectix QA/Admin Panel/User Management,Draft,High,"tectix-qa, Automatable, P1",DELETE /api/admin/users/doesnotexist,HTTP 404,username=doesnotexist
+[ADMIN-008] Admin cannot delete themselves,"[ADMIN-008] Admin cannot delete themselves
+
+Notes: Self-delete protection",Admin authenticated,Tectix QA/Admin Panel/User Management,Draft,High,"tectix-qa, Automatable, P1",DELETE /api/admin/users/<own_username>,HTTP 400 or 403; admin account preserved,Own admin username
+[ADMIN-009] Admin can list portfolio systems,[ADMIN-009] Admin can list portfolio systems,Admin authenticated,Tectix QA/Admin Panel/Systems,Draft,Highest,"tectix-qa, Automatable, P0",GET /api/admin/systems,HTTP 200; JSON array of systems (may be empty),None
+[ADMIN-010] Admin adds system to portfolio,[ADMIN-010] Admin adds system to portfolio,Admin authenticated,Tectix QA/Admin Panel/Systems,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/admin/systems,,"{ ""system_id"": 12345, ""system_name"": ""Test System"" }"
+,,,,,,,Provide system_id (integer) and optional name,HTTP 200 or 201; system appears in GET /api/admin/systems,
+[ADMIN-011] Add system with duplicate system_id,[ADMIN-011] Add system with duplicate system_id,Admin authenticated; system already exists,Tectix QA/Admin Panel/Systems,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/systems with existing system_id,HTTP 409 or 400; duplicate rejected,"{ ""system_id"": 12345 }"
+[ADMIN-012] Admin uploads CSV for a system,[ADMIN-012] Admin uploads CSV for a system,Admin authenticated; system exists in portfolio,Tectix QA/Admin Panel/Systems,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/admin/systems/<system_id>/csv,,system_id=<id>; CSV file
+,,,,,,,Upload CSV file (multipart),HTTP 200; CSV path stored; visible in system record,
+[ADMIN-013] Admin updates (unsets) CSV path for a system,[ADMIN-013] Admin updates (unsets) CSV path for a system,Admin authenticated; system with CSV,Tectix QA/Admin Panel/Systems,Draft,High,"tectix-qa, Automatable, P1",PATCH /api/admin/systems/<system_id>/csv,HTTP 200; CSV path cleared/updated,system_id=<id>
+[ADMIN-014] Admin deletes system from portfolio,[ADMIN-014] Admin deletes system from portfolio,Admin authenticated; system exists,Tectix QA/Admin Panel/Systems,Draft,Highest,"tectix-qa, Automatable, P0",DELETE /api/admin/systems/<system_id>,HTTP 200; system no longer in GET /api/admin/systems,system_id=<id>
+[ADMIN-015] Delete non-existent system returns 404,[ADMIN-015] Delete non-existent system returns 404,Admin authenticated,Tectix QA/Admin Panel/Systems,Draft,High,"tectix-qa, Automatable, P1",DELETE /api/admin/systems/99999,HTTP 404,system_id=99999
+[ADMIN-016] Non-admin cannot manage systems,[ADMIN-016] Non-admin cannot manage systems,Regular user authenticated,Tectix QA/Admin Panel/Systems,Draft,High,"tectix-qa, Automatable, P1",GET /api/admin/systems,HTTP 403,None
+[ADMIN-017] Admin can retrieve log info,[ADMIN-017] Admin can retrieve log info,Admin authenticated,Tectix QA/Admin Panel/Logs,Draft,High,"tectix-qa, Automatable, P1",GET /api/admin/logs/info,"HTTP 200; JSON with log file info (size, path, etc.)",None
+[ADMIN-018] Admin can tail log file,[ADMIN-018] Admin can tail log file,Admin authenticated,Tectix QA/Admin Panel/Logs,Draft,High,"tectix-qa, Automatable, P1",GET /api/admin/logs/tail,HTTP 200; JSON with array of recent log lines,Optional: ?lines=50
+[ADMIN-019] Admin can search logs,[ADMIN-019] Admin can search logs,Admin authenticated,Tectix QA/Admin Panel/Logs,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/logs/search,,"{ ""query"": ""LOGIN"" }"
+,,,,,,,Provide search query,HTTP 200; JSON with matching log lines,
+[ADMIN-020] Admin can download log file,[ADMIN-020] Admin can download log file,Admin authenticated,Tectix QA/Admin Panel/Logs,Draft,Medium,"tectix-qa, Automatable, P2",GET /api/admin/logs/download,HTTP 200; file download response; Content-Disposition header set,None
+[ADMIN-021] Non-admin cannot access logs,[ADMIN-021] Non-admin cannot access logs,Regular user authenticated,Tectix QA/Admin Panel/Logs,Draft,High,"tectix-qa, Automatable, P1",GET /api/admin/logs/info,HTTP 403,None
+[POL-001] Admin lists all scan policies,[POL-001] Admin lists all scan policies,Admin authenticated,Tectix QA/Scan Policies/CRUD,Draft,Highest,"tectix-qa, Automatable, P0",GET /api/policies,HTTP 200; JSON array of policies (may be empty),None
+[POL-002] Admin creates daily scan policy,[POL-002] Admin creates daily scan policy,Admin authenticated,Tectix QA/Scan Policies/CRUD,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/policies,,"{ ""name"": ""Daily Scan"", ""frequency"": ""DAILY"", ""time_of_day"": ""02:00"", ""enabled"": true }"
+,,,,,,,Set frequency=DAILY,HTTP 200 or 201; policy created with id; visible in GET /api/policies,
+[POL-003] Admin creates weekly scan policy,[POL-003] Admin creates weekly scan policy,Admin authenticated,Tectix QA/Scan Policies/CRUD,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/policies,,"{ ""name"": ""Weekly Scan"", ""frequency"": ""WEEKLY"", ""day_of_week"": ""Monday"" }"
+,,,,,,,Set frequency=WEEKLY with day_of_week,HTTP 200 or 201; policy created,
+[POL-004] Create policy with invalid frequency,[POL-004] Create policy with invalid frequency,Admin authenticated,Tectix QA/Scan Policies/CRUD,Draft,High,"tectix-qa, Automatable, P1",POST /api/policies,,"{ ""name"": ""Bad"", ""frequency"": ""HOURLY"" }"
+,,,,,,,Use unsupported frequency value,HTTP 400 or 422; valid frequencies: DAILY/WEEKLY/BIWEEKLY/MONTHLY only,
+[POL-005] Admin updates existing scan policy,[POL-005] Admin updates existing scan policy,Admin authenticated; policy exists,Tectix QA/Scan Policies/CRUD,Draft,High,"tectix-qa, Automatable, P1",PUT /api/policies/<policy_id>,,"{ ""name"": ""Updated Name"", ""enabled"": false }"
+,,,,,,,Change name and enabled state,HTTP 200; policy updated in GET /api/policies,
+[POL-006] Admin deletes scan policy,[POL-006] Admin deletes scan policy,Admin authenticated; policy exists,Tectix QA/Scan Policies/CRUD,Draft,Highest,"tectix-qa, Automatable, P0",DELETE /api/policies/<policy_id>,HTTP 200; policy no longer in GET /api/policies,policy_id=<id>
+[POL-007] Enroll systems in scan policy,[POL-007] Enroll systems in scan policy,Admin authenticated; policy and systems exist,Tectix QA/Scan Policies/Enrollment,Draft,Highest,"tectix-qa, Automatable, P0",POST /api/policies/<policy_id>/systems,,"{ ""system_ids"": [1, 2, 3] }"
+,,,,,,,Provide array of system IDs,HTTP 200 or 201; systems enrolled; visible in policy details,
+[POL-008] Remove systems from scan policy,[POL-008] Remove systems from scan policy,Admin authenticated; systems enrolled in policy,Tectix QA/Scan Policies/Enrollment,Draft,High,"tectix-qa, Automatable, P1",DELETE /api/policies/<policy_id>/systems,,"{ ""system_ids"": [1] }"
+,,,,,,,Provide array of system IDs to remove,HTTP 200; systems no longer enrolled in policy,
+[POL-009] Manually trigger policy run,[POL-009] Manually trigger policy run,Admin authenticated; policy with enrolled systems,Tectix QA/Scan Policies/Execution,Draft,High,"tectix-qa, Automatable, P1",POST /api/policies/<policy_id>/run,HTTP 200 or 202; scan triggered for enrolled systems,policy_id=<id>
+[POL-010] Non-admin cannot manage policies,[POL-010] Non-admin cannot manage policies,Regular user authenticated,Tectix QA/Scan Policies/Access,Draft,High,"tectix-qa, Automatable, P1",GET /api/policies,HTTP 403,None
+[MON-001] Retrieve monitored systems status,[MON-001] Retrieve monitored systems status,Admin authenticated; systems enrolled in policies,Tectix QA/Continuous Monitoring/Dashboard,Draft,Highest,"tectix-qa, Automatable, P0",GET /api/monitoring/continuous,"HTTP 200; JSON with array of monitored systems; each has system_id, readiness_score, pass/fail/concern counts",None
+[MON-002] Monitoring returns empty array when no systems enrolled,[MON-002] Monitoring returns empty array when no systems enrolled,Admin authenticated; no systems in portfolio,Tectix QA/Continuous Monitoring/Dashboard,Draft,High,"tectix-qa, Automatable, P1",GET /api/monitoring/continuous,HTTP 200; JSON: [] or { systems: [] },None
+[MON-003] Non-admin cannot view monitoring dashboard,[MON-003] Non-admin cannot view monitoring dashboard,Regular user authenticated,Tectix QA/Continuous Monitoring/Dashboard,Draft,High,"tectix-qa, Automatable, P1",GET /api/monitoring/continuous,HTTP 403,None
+[MON-004] Readiness score reflects test results accurately,"[MON-004] Readiness score reflects test results accurately
+
+Notes: Manual verification against known test results",System with completed scan,Tectix QA/Continuous Monitoring/Scores,Draft,Medium,"tectix-qa, Manual-Only, P2",Complete a scan for a system,,System with known pass/fail ratio
+,,,,,,,GET /api/monitoring/continuous,,
+,,,,,,,Check readiness_score,Readiness score = (PASS count / total tests) * 100; validates against known scan data,
+[EMASS-001] Test eMASS connectivity with valid credentials,"[EMASS-001] Test eMASS connectivity with valid credentials
+
+Notes: Requires live or mocked eMASS endpoint",Admin authenticated; eMASS config set,Tectix QA/eMASS Integration/Connection,Draft,High,"tectix-qa, Manual-Only, P1",POST /api/admin/test_emass (GET also supported),HTTP 200; JSON shows connection result,Valid eMASS creds in config
+[EMASS-002] Test eMASS connectivity with invalid credentials,[EMASS-002] Test eMASS connectivity with invalid credentials,Admin authenticated; wrong eMASS creds,Tectix QA/eMASS Integration/Connection,Draft,High,"tectix-qa, Manual-Only, P1",POST /api/admin/test_emass,HTTP 200 with error or HTTP 4xx; connection failure reported (not 500),Invalid eMASS creds
+[EMASS-003] Sync data from eMASS,[EMASS-003] Sync data from eMASS,Admin authenticated; valid eMASS connection,Tectix QA/eMASS Integration/Sync,Draft,Medium,"tectix-qa, Manual-Only, P2",POST /api/admin/update_emass,HTTP 200; systems synced from eMASS,Valid eMASS configuration
+[EMASS-004] Non-admin cannot manage eMASS connection,[EMASS-004] Non-admin cannot manage eMASS connection,Regular user authenticated,Tectix QA/eMASS Integration/Access,Draft,High,"tectix-qa, Automatable, P1",POST /api/admin/test_emass,HTTP 403,Any
+[SEC-001] Protected endpoints require authentication,"[SEC-001] Protected endpoints require authentication
+
+Notes: Automated: loop through all endpoints",No session,Tectix QA/Security/Authentication,Draft,Highest,"tectix-qa, Automatable, P0",Access each protected endpoint without login,,No session
+,,,,,,,"Test endpoints: /process, /api/admin/users, /api/policies, /api/account/password",All protected endpoints return HTTP 401 or redirect; not accessible without valid session,
+[SEC-002] Admin endpoints reject regular users,[SEC-002] Admin endpoints reject regular users,Regular user authenticated,Tectix QA/Security/Authorization,Draft,Highest,"tectix-qa, Automatable, P0",Login as regular user,,Regular user session
+,,,,,,,"Attempt admin-only endpoints: GET /api/admin/users, /api/admin/systems, /api/policies",All admin endpoints return HTTP 403,
+[SEC-003] System ID field rejects SQL injection,"[SEC-003] System ID field rejects SQL injection
+
+Notes: system_id validates with .isdigit() before use",User authenticated,Tectix QA/Security/Injection,Draft,High,"tectix-qa, Automatable, P1",POST /process with SQL injection in system_id field,HTTP 400; isdigit() check blocks non-numeric; no SQL executed,"system_id="" OR 1=1 --"
+[SEC-004] File upload rejects non-CSV files,"[SEC-004] File upload rejects non-CSV files
+
+Notes: filename extension check enforced",User authenticated,Tectix QA/Security/Upload,Draft,High,"tectix-qa, Automatable, P1","POST /process with .exe, .php, .js, .xlsx files",HTTP 400; error: 'Only CSV files are supported.',"data_file=malicious.exe (or .php, etc.)"
+[SEC-005] Passwords are hashed in database,"[SEC-005] Passwords are hashed in database
+
+Notes: DB inspection needed; manual test",Direct DB access for verification,Tectix QA/Security/Passwords,Draft,High,"tectix-qa, Manual-Only, P1",Create user,,Username/password pair
+,,,,,,,Inspect database users table,,
+,,,,,,,Check password_hash field,password_hash field is NOT the plaintext password; length > 40 chars; bcrypt/scrypt format,
+[SEC-006] Session cookie has secure attributes,"[SEC-006] Session cookie has secure attributes
+
+Notes: Manual inspection with browser devtools",HTTPS environment,Tectix QA/Security/Session,Draft,High,"tectix-qa, Manual-Only, P1",Login and capture Set-Cookie header,,Login request over HTTPS
+,,,,,,,Inspect cookie flags,Cookie has HttpOnly flag; SameSite attribute set; Secure flag if HTTPS,
+[SEC-007] Rate limiting is IP-based not user-based,"[SEC-007] Rate limiting is IP-based not user-based
+
+Notes: Rate limit tracks per IP",Different usernames same IP,Tectix QA/Security/Rate Limiting,Draft,High,"tectix-qa, Automatable, P1",Send 11+ login attempts from same IP using different usernames,,Multiple usernames from same IP
+,,,,,,,Confirm 429 after limit exceeded,HTTP 429 triggered based on IP regardless of username used,
+[SEC-008] Login response times are consistent,"[SEC-008] Login response times are consistent
+
+Notes: Manual test with curl timing",App running,Tectix QA/Security/Timing,Draft,Medium,"tectix-qa, Manual-Only, P2",Login with valid user + wrong password (time it),,Mix of valid/invalid users
+,,,,,,,Login with invalid user + any password (time it),,
+,,,,,,,Compare timings (run 5x each),Response times within ~50ms of each other; _auth_sleep normalizes timing,
+[PERF-001] Single system scan completes in reasonable time,"[PERF-001] Single system scan completes in reasonable time
+
+Notes: Baseline depends on CSV size and # of tests",System with CSV ready,Tectix QA/Performance/Scan,Draft,Medium,"tectix-qa, Manual-Only, P2",POST /process with valid system + CSV,,system_id=12345; typical CSV file
+,,,,,,,Poll status until completed,,
+,,,,,,,Record elapsed time,Scan completes within 120 seconds for a typical CSV,
+[PERF-002] API endpoints respond within acceptable time,"[PERF-002] API endpoints respond within acceptable time
+
+Notes: Use locust or wrk for load testing",App running under normal load,Tectix QA/Performance/API,Draft,Medium,"tectix-qa, Manual-Only, P2",Run GET /api/session 50 times,,Authenticated session
+,,,,,,,Record min/max/avg response time,Average response time < 200ms; no timeouts,
+[PERF-003] Multiple concurrent scans do not cause errors,[PERF-003] Multiple concurrent scans do not cause errors,Multiple users authenticated,Tectix QA/Performance/Concurrent,Draft,Low,"tectix-qa, Manual-Only, P3",Submit 3 simultaneous scans (one per user),,3 different system CSVs
+,,,,,,,Monitor for errors or data cross-contamination,All 3 scans complete successfully; each user sees only their own results; no job cross-contamination,
+[UI-001] Login form renders correctly,"[UI-001] Login form renders correctly
+
+Notes: Manual",App running,Tectix QA/Frontend/Login Page,Draft,Highest,"tectix-qa, Manual-Only, P0",Open app URL in browser,,Chrome/Firefox
+,,,,,,,Observe login page,Username and password fields visible; Login button present; no JS console errors,
+[UI-002] Successful login redirects to dashboard,"[UI-002] Successful login redirects to dashboard
+
+Notes: Manual",App running; valid credentials,Tectix QA/Frontend/Login Page,Draft,Highest,"tectix-qa, Manual-Only, P0",Enter valid username/password,,testadmin / TestPass123!
+,,,,,,,Click Login,Redirected to dashboard; TopNav shows username; no error messages,
+[UI-003] Dashboard loads and shows scan interface,"[UI-003] Dashboard loads and shows scan interface
+
+Notes: Manual",User authenticated,Tectix QA/Frontend/Dashboard,Draft,Highest,"tectix-qa, Manual-Only, P0",Login and navigate to dashboard,System ID input visible; File upload button present; no broken UI elements,Valid session
+[UI-004] Upload CSV and submit scan shows spinner,"[UI-004] Upload CSV and submit scan shows spinner
+
+Notes: Manual",User authenticated; CSV file ready,Tectix QA/Frontend/Dashboard,Draft,Highest,"tectix-qa, Manual-Only, P0",Enter numeric system ID,,system_id=12345; test.csv
+,,,,,,,Upload CSV file,,
+,,,,,,,Click submit/process,Processing spinner / loading indicator appears; status updates stream in,
+[UI-005] Scan results display in test table,"[UI-005] Scan results display in test table
+
+Notes: Manual",Scan completed,Tectix QA/Frontend/Dashboard,Draft,Highest,"tectix-qa, Manual-Only, P0",Complete a scan,,Completed job
+,,,,,,,Observe results panel,"TestTable component shows rows; PASS in green, FAIL in red, CONCERN in yellow, NA in grey; readiness gauge shows score",
+[UI-006] Admin panel accessible only to admin users,"[UI-006] Admin panel accessible only to admin users
+
+Notes: Manual",Admin user authenticated,Tectix QA/Frontend/Admin Panel,Draft,Highest,"tectix-qa, Manual-Only, P0",Login as admin,,Admin session
+,,,,,,,Navigate to Admin Panel,"Admin Panel loads with sidebar: Users, Portfolio, Policies, Logs, eMASS, About",
+[UI-007] Regular user does not see admin panel link,"[UI-007] Regular user does not see admin panel link
+
+Notes: Manual",Regular user authenticated,Tectix QA/Frontend/Admin Panel,Draft,High,"tectix-qa, Manual-Only, P1",Login as regular user,,User session
+,,,,,,,Check TopNav,No Admin Panel link/button visible in navigation,
+[UI-008] User can change password from Account page,"[UI-008] User can change password from Account page
+
+Notes: Manual",User authenticated,Tectix QA/Frontend/Account,Draft,High,"tectix-qa, Manual-Only, P1",Navigate to Account page,,Valid password change data
+,,,,,,,Fill in current and new password,,
+,,,,,,,Submit,Success message shown; can login with new password,
+[UI-009] 2FA enrollment modal shows QR code,"[UI-009] 2FA enrollment modal shows QR code
+
+Notes: Manual",User without 2FA authenticated,Tectix QA/Frontend/2FA Enrollment,Draft,High,"tectix-qa, Manual-Only, P1",Navigate to Account page,,No existing 2FA
+,,,,,,,Click Enable 2FA,Modal appears with QR code and manual entry code; instructions shown,
+[UI-010] Session expired prompt appears on timeout,"[UI-010] Session expired prompt appears on timeout
+
+Notes: Manual; timing dependent",User with active session,Tectix QA/Frontend/Session Expired,Draft,High,"tectix-qa, Manual-Only, P1",Leave app idle until session expires,,Session timeout value
+,,,,,,,Try to interact with app,SessionExpiredPrompt component appears; user prompted to log back in,
+[UI-011] Classification banner displays on all pages,"[UI-011] Classification banner displays on all pages
+
+Notes: Manual",App running,Tectix QA/Frontend/Classification,Draft,Medium,"tectix-qa, Manual-Only, P2",Open any page of the app,ClassificationBanner component visible at top and/or bottom of page,None
+[UI-012] Reporting page shows past scan results,"[UI-012] Reporting page shows past scan results
+
+Notes: Manual",User with completed scans,Tectix QA/Frontend/Reporting,Draft,High,"tectix-qa, Manual-Only, P1",Navigate to Reporting page,,User with job history
+,,,,,,,Look for historical jobs,Previous scans listed; can view JSON results; download button works,
+[UI-013] Monitoring page shows enrolled systems,"[UI-013] Monitoring page shows enrolled systems
+
+Notes: Manual",Admin with enrolled systems,Tectix QA/Frontend/Continuous Monitoring,Draft,High,"tectix-qa, Manual-Only, P1",Login as admin,,Systems enrolled in policies
+,,,,,,,Navigate to Continuous Monitoring,MonitoringGauge and ComplianceTimeChart visible; system cards show readiness scores,
+[INT-001] Full scan workflow: login > upload CSV > scan > download,"[INT-001] Full scan workflow: login > upload CSV > scan > download
+
+Notes: Manual E2E; smoke test for releases",Fresh session,Tectix QA/Integration/End-to-End,Draft,Highest,"tectix-qa, Manual-Only, P0",Login as user,,testadmin; system_id=12345; valid CSV
+,,,,,,,Upload CSV via Dashboard,,
+,,,,,,,Submit scan with numeric system ID,,
+,,,,,,,Wait for completion,,
+,,,,,,,Download Excel checklist,All steps succeed; downloaded file is valid Excel; contains test results,
+[INT-002] Admin workflow: create user > login as new user > scan > view results,"[INT-002] Admin workflow: create user > login as new user > scan > view results
+
+Notes: Manual E2E",Fresh admin session,Tectix QA/Integration/End-to-End,Draft,Highest,"tectix-qa, Manual-Only, P0",Admin creates new user,,New user credentials; valid CSV
+,,,,,,,Logout,,
+,,,,,,,Login as new user,,
+,,,,,,,Submit scan,,
+,,,,,,,View results,New user can login and complete a scan; admin can see no cross-data contamination,
+[INT-003] Policy automation: create policy > add system > trigger run > check monitoring,"[INT-003] Policy automation: create policy > add system > trigger run > check monitoring
+
+Notes: Manual E2E",Admin session,Tectix QA/Integration/End-to-End,Draft,High,"tectix-qa, Manual-Only, P1",Create scan policy (DAILY),,Valid system and CSV
+,,,,,,,Add system to portfolio,,
+,,,,,,,Enroll system in policy,,
+,,,,,,,Trigger policy run manually (POST /api/policies/<id>/run),,
+,,,,,,,Check GET /api/monitoring/continuous,Policy runs; monitoring page reflects updated scan results,
+[INT-004] Recovery from failed scan (bad CSV),[INT-004] Recovery from failed scan (bad CSV),User authenticated,Tectix QA/Integration/End-to-End,Draft,Medium,"tectix-qa, Automatable, P2",Upload CSV with corrupted/empty content,,Empty or malformed CSV
+,,,,,,,Submit scan,,
+,,,,,,,Check status,System handles gracefully; no 500 error; meaningful error message returned,
